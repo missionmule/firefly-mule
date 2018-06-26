@@ -7,16 +7,16 @@ This application is the companion computer software designed to control the Miss
 
 Communication between the Mission Mule payload and airframe is minimal.
 
-### Upstream Communication (TX)
+### TX Communication
 
-Upstream communication consists of a heartbeat at least once per second. The heartbeat message itself incorporates the status of the Mission Mule payload: either idle (message: `00\n`) or actively downloading from a data station (message: `01\n`).
+TX communication consists of a heartbeat at least once per second. The heartbeat message itself incorporates the status of the Mission Mule payload: either idle (message: `00\n`) or actively downloading from a data station (message: `01\n`).
 
-### Downstream Communication (RX)
+### RX Communication
 
-Downstream communication consists of the airframe autopilot sending the data station ID upon arrival. The data station ID is sent as a character string terminated with a newline (`\n`) character.
+RX communication consists of the airframe autopilot sending the data station ID upon arrival. The data station ID is sent as a character string terminated with a newline (`\n`) character.
 
 
-## Set up
+## Set Up
 
 To set up and run the application, execute:
 
