@@ -89,7 +89,7 @@ class SerialHandler(object):
             while not self.tx_queue.empty():
                 try:
                     self.tx_lock.acquire()
-                    msg = self.tx_queue.get()
+                    msg = self.tx_queue.get()[1] # Get message in PriorityQueue tuple (0,'0x00')
                     self.tx_lock.release()
                     logging.debug('TX: %s', msg)
                     self.serial.write(b''.join(msg))
