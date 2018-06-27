@@ -85,11 +85,11 @@ class SerialHandler(object):
             while not self.tx_queue.empty():
                 try:
                     self.tx_lock.acquire()
-                    logging.debug('[1] TX queue size: %i', self.rx_queue.qsize())
+                    logging.debug('[1] TX queue size: %i', self.tx_queue.qsize())
                     data = self.tx_queue.get() # Get message in PriorityQueue tuple (0,'0x00')
                     self.tx_lock.release()
                     logging.debug('TX: %s', data[1])
-                    logging.debug('[2] TX queue size: %i', self.rx_queue.qsize())
+                    logging.debug('[2] TX queue size: %i', self.tx_queue.qsize())
                     self.serial.write(data[1])
                 except:
                     logging.exception('Serial write failure') # Probably get disconnected
