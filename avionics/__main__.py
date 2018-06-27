@@ -27,7 +27,7 @@ def setup_logging():
     logging.getLogger().addHandler(ch)
 
 def signal_handler(services, signum, frame):
-    logging.info("Received %s" % s)
+    logging.info("Received %s" % signum)
 
     logging.info("Cleaning up...")
 
