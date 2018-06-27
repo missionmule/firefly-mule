@@ -70,12 +70,12 @@ def main():
     thread_heartbeat.name = 'Heartbeat'
     thread_heartbeat.start()
 
-    thread_serial_writer = threading.Thread(target=ser._writer)
+    thread_serial_writer = threading.Thread(target=ser.writer)
     thread_serial_writer.daemon = True
     thread_serial_writer.name = 'Serial Communication Writer'
     thread_serial_writer.start()
 
-    thread_serial_reader = threading.Thread(target=ser._reader)
+    thread_serial_reader = threading.Thread(target=ser.reader)
     thread_serial_reader.daemon = True
     thread_serial_reader.name = 'Serial Communication Reader'
     thread_serial_reader.start()
