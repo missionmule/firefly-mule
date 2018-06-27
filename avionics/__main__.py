@@ -4,9 +4,9 @@ import sys
 import threading
 import queue
 
-from avionics.services import DataStationHandler
-from avionics.services import Heartbeat
-from avionics.services import SerialHandler
+from services import DataStationHandler
+from services import Heartbeat
+from services import SerialHandler
 
 def setup_logging():
     # Set up logging [Logging levels in order of seriousness: DEBUG < INFO < WARNING < ERROR < CRITICAL]
