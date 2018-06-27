@@ -56,7 +56,7 @@ def main():
     services.append(dl)
 
     # Heartbeat pushed to serial tx_queue every 500ms
-    hb = Heartbeat(dl.is_downloading, ser.tx_queue, 500)
+    hb = Heartbeat(ser.tx_queue, 500)
     services.append(hb)
 
     thread_data_station_handler = threading.Thread(target=dl.run, args=(ser.rx_lock,))
@@ -64,7 +64,7 @@ def main():
     thread_data_station_handler.name = 'Data Station Communication Handler'
     thread_data_station_handler.start()
 
-    thread_heartbeat = threading.Thread(target=hb.run, args=(ser.tx_lock,))
+    thread_heartbeat = threading.Thread(target=hb.run, args=(ser.tx_lock,dl.is_downloading))
     thread_heartbeat.daemon = True
     thread_heartbeat.name = 'Heartbeat'
     thread_heartbeat.start()

@@ -95,6 +95,6 @@ class DataStationHandler(object):
             else:
                 time.sleep(1)   # Check RX queue again in 1 second
 
-    def stop():
+    def stop(self):
         self._alive = False
         self.download_thread.join()
