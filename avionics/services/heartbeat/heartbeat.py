@@ -15,12 +15,12 @@ class Heartbeat(object):
         while True:
             if (self.is_downloading):
                 tx_lock.acquire()
-                self.tx_queue.put((0,'01')) # Tuple with 0 (top) prority
+                self.tx_queue.put((0,'\x01')) # Tuple with 0 (top) prority
                 tx_lock.release()
                 logging.debug('Heartbeat: downloading')
             else:
                 tx_lock.acquire()
-                self.tx_queue.put((0,'00')) # Tuple with 0 (top) prority
+                self.tx_queue.put((0,'\x00')) # Tuple with 0 (top) prority
                 tx_lock.release()
                 logging.debug('Heartbeat: idle')
             time.sleep(self.frequency_millis / 1000)
