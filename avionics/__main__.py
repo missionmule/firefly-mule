@@ -24,20 +24,24 @@ def setup_logging():
     ch.setFormatter(formatter)
     logging.getLogger().addHandler(ch)
 
-def sigint_handler():
-    logging.info("Received SIGINT")
+def sigint_handler(signum, frame, threads):
+    logging.info("Received %s" % s)
+
     logging.info("Cleaning up...")
 
-    ser.stop()
-    dl.stop()
-    hb.stop()
+    for thread in threads:
+        thread.stop()
 
-    time.sleep(3)
+    time.sleep(3) # Wait for cleanup
 
     logging.info("Bye.")
+    
+    exit()
 
 def main():
     logging.info('\n\n--- mission start ---')
+
+    threads = []
 
     # Serial handler with public rx and tx queues
     ser = SerialHandler('/dev/ttyAMA0', 57600)
@@ -53,24 +57,28 @@ def main():
     thread_data_station_handler.daemon = True
     thread_data_station_handler.name = 'Data Station Communication Handler'
     thread_data_station_handler.start()
+    threads.append(thread_data_station_handler)
 
     thread_heartbeat = threading.Thread(target=hb.run, args=(ser.tx_lock,))
     thread_heartbeat.daemon = True
     thread_heartbeat.name = 'Heartbeat'
     thread_heartbeat.start()
+    threads.append(thread_heartbeat)
 
     thread_serial_writer = threading.Thread(target=ser._writer)
     thread_serial_writer.daemon = True
     thread_serial_writer.name = 'Serial Communication Writer'
     thread_serial_writer.start()
+    threads.append(thread_serial_writer)
 
     thread_serial_reader = threading.Thread(target=ser._reader)
     thread_serial_reader.daemon = True
     thread_serial_reader.name = 'Serial Communication Reader'
     thread_serial_reader.start()
+    threads.append(thread_serial_reader)
 
     # Gracefully handle SIGINT
-    signal.signal(signal.SIGINT, sigint_handler)
+    signal.signal(signal.SIGINT, signal_handler)
 
     # Wait for daemon threads to return
     thread_data_station_handler.join()
