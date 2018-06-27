@@ -8,11 +8,12 @@ class Heartbeat(object):
         self.is_downloading = _is_downloading
         self.tx_queue = _tx_queue
         self.frequency_millis = _frequency_millis          # Frequency of heartbeat in milliseconds
+        self._alive = True
 
     def run(self, tx_lock):
         logging.info('Heartbeat initiated')
 
-        while True:
+        while self._alive:
             if (self.is_downloading):
                 tx_lock.acquire()
                 self.tx_queue.put((0,'\x01')) # Tuple with 0 (top) prority
@@ -26,3 +27,6 @@ class Heartbeat(object):
             time.sleep(self.frequency_millis / 1000)
 
         logging.error('Heartbeat terminated')
+
+    def stop(self):
+        self._alive = False

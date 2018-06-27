@@ -29,11 +29,13 @@ class DataStationHandler(object):
         self.overall_timeout_millis = _overall_timeout_millis
         self.rx_queue = _rx_queue
         self.xbee = XBee()
+        self.download_thread = None
+        self._alive = True
 
     def run(self, rx_lock):
         """Loop forever and handle downloads as data stations are reached"""
 
-        while True:
+        while self._alive:
 
             if not self.rx_queue.empty():    # You've got mail!
 
@@ -61,11 +63,11 @@ class DataStationHandler(object):
                         download_worker.connect()
 
                         # Spawn download thread
-                        download_thread = threading.Thread(target=download_worker.start)
-                        download_thread.start()
+                        self.download_thread = threading.Thread(target=download_worker.start)
+                        self.download_thread.start()
 
                         # Attempt to join the thread after timeout, if still alive the download timed out
-                        download_thread.join(self.overall_timeout_millis)
+                        self.download_thread.join(self.overall_timeout_millis)
 
                         if download_thread.is_alive():
                             logging.info("Download timeout: Download cancelled")
@@ -87,3 +89,7 @@ class DataStationHandler(object):
 
             else:
                 time.sleep(1)   # Check RX queue again in 1 second
+
+    def stop():
+        self._alive = False
+        self.download_thread.join()

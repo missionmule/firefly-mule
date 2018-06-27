@@ -34,6 +34,15 @@ class SerialHandler(object):
 
         self._alive = True
 
+
+    def stop(self):
+        """Stop and close connection"""
+        logging.debug('Stopping serial connection')
+        if self._alive:
+            self._alive = False
+            self.thread_read.join()
+            self.thread_write.join()
+
     def connect(self):
         """Connect to serial port"""
         while True:
@@ -83,6 +92,8 @@ class SerialHandler(object):
         self._alive = False
         logging.debug('Serial reader thread terminated')
 
+        self.stop()
+
     def _writer(self):
         """Loop forever and write messages from TX queue"""
 
@@ -101,12 +112,4 @@ class SerialHandler(object):
                     break
 
         logging.debug('Serial writer thread terminated')
-        self._stop()
-
-    def _stop(self):
-        """Stop and close connection"""
-        logging.debug('Stopping serial connection')
-        if self._alive:
-            self._alive = False
-            self.thread_read.join()
-            self.thread_write.join()
+        self.stop()

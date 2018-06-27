@@ -1,5 +1,6 @@
 import logging
 import serial
+import signal
 import sys
 import threading
 import queue
@@ -22,6 +23,18 @@ def setup_logging():
     formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(levelname)s %(message)s')
     ch.setFormatter(formatter)
     logging.getLogger().addHandler(ch)
+
+def sigint_handler():
+    logging.info("Received SIGINT")
+    logging.info("Cleaning up...")
+
+    ser.stop()
+    dl.stop()
+    hb.stop()
+
+    time.sleep(3)
+
+    logging.info("Bye.")
 
 def main():
     logging.info('\n\n--- mission start ---')
@@ -56,13 +69,14 @@ def main():
     thread_serial_reader.name = 'Serial Communication Reader'
     thread_serial_reader.start()
 
-    # thread_serial_handler = threading.Thread(target=ser.run)
-    # thread_serial_handler.daemon = True
-    # thread_serial_handler.name = 'Serial Communication Handler'
-    # thread_serial_handler.start()
+    # Gracefully handle SIGINT
+    signal.signal(signal.SIGINT, sigint_handler)
 
-    while True:
-        pass    # Let the threads do their work
+    # Wait for daemon threads to return
+    thread_data_station_handler.join()
+    thread_heartbeat.join()
+    thread_serial_writer.join()
+    thread_serial_reader.join()
 
 if __name__ == "__main__":
     setup_logging()

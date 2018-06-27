@@ -66,14 +66,14 @@ class XBee(object):
         if "DEVELOPMENT" in os.environ:
             return False
 
-        logging.debug("xBee port write: %s" % self.preamble_out)
+        logging.debug("XBee TX: %s" % self.preamble_out)
         self.xbee_port.write(self.preamble_out.encode('utf-8'))
 
-        logging.debug("xBee port write: %s" % self.data_station_idens[identity])
-        self.xbee_port.write(self.data_station_idens[identity])
+        logging.debug("XBee TX: %s" % self.data_station_idens[identity])
+        self.xbee_port.write(self.data_station_idens[identity].encode('utf-8'))
 
-        logging.debug("xBee port write: %s" % self.encode[command])
-        self.xbee_port.write(self.encode[command])
+        logging.debug("XBee TX: %s" % self.encode[command])
+        self.xbee_port.write(self.encode[command].encode('utf-8'))
 
     def acknowledge(self, identity, command):
         """
@@ -90,8 +90,8 @@ class XBee(object):
         command_code = self.encode[command]
 
         while (self.xbee_port.in_waiting > 0): # There's something in the XBee buffer
-            incoming_byte = self.xbee_port.read() # Read a byte at a time
-            logging.debug("XBee incoming byte: %s" % incoming_byte)
+            incoming_byte = self.xbee_port.read().decode('utf-8') # Read a byte at a time
+            logging.debug("XBee TX: %s" % incoming_byte)
 
             # Third pass: Read command
             if (iden_match == True):
