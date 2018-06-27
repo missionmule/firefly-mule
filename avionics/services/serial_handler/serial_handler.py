@@ -32,6 +32,8 @@ class SerialHandler(object):
 
         self.serial = None
 
+        self._alive = True
+
     def connect(self):
         """Connect to serial port"""
         while True:
