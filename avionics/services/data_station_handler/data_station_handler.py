@@ -1,3 +1,4 @@
+import logging
 import random
 import time
 import threading
@@ -80,7 +81,7 @@ class DataStationHandler(object):
                 #         logging.error(e)
                 #
                 # else: # Simulate download
-                
+
                 r = random.randint(10,100)
                 logging.debug('Simulating download for %i seconds', r)
                 time.sleep(r) # "Download" for random time between 10 and 100 seconds
