@@ -15,7 +15,7 @@ class SerialHandler(object):
 
     """
 
-    def __init__(self, port, baudrate, timeout):
+    def __init__(self, _port, _baudrate, _timeout):
 
         self._write_lock = threading.Lock()     # Safety first
 
@@ -26,6 +26,10 @@ class SerialHandler(object):
 
         self.rx_lock = threading.Lock()
         self.tx_lock = threading.Lock()
+
+        self.port = _port
+        self.baudrate = _baudrate
+        self.timeout = _timeout
 
         self.serial = None
 
