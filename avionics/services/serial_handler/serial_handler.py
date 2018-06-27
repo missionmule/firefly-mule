@@ -27,6 +27,8 @@ class SerialHandler(object):
         self.rx_lock = threading.Lock()
         self.tx_lock = threading.Lock()
 
+        self.serial_lock = threading.Lock()
+
         self.port = _port
         self.baudrate = _baudrate
 
@@ -51,15 +53,19 @@ class SerialHandler(object):
 
         self._alive = True
 
-        self.thread_write = threading.Thread(target=self._writer())
-        self.thread_write.daemon = True
-        self.thread_write.name = 'Serial Writer'
-        self.thread_write.start()
+        # self.thread_write = threading.Thread(target=self._writer())
+        # self.thread_write.daemon = True
+        # self.thread_write.name = 'Serial Writer'
+        # self.thread_write.start()
 
         self.thread_read = threading.Thread(target=self._reader())
         self.thread_read.daemon = True
         self.thread_read.name = 'Serial Reader'
         self.thread_read.start()
+
+        self._writer()
+
+
 
     def _reader(self):
         """Loop forever and accept messages from autopilot into RX queue"""
