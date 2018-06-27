@@ -22,7 +22,7 @@ class SerialHandler(object):
         self._alive = False     # Made true on r/w thread spawn
 
         self.rx_queue = queue.Queue(maxsize=50)
-        self.tx_queue = queue.PriorityQueue(maxsize) # Priority 0: heartbeat, Priority 1: otherwise
+        self.tx_queue = queue.PriorityQueue(maxsize=50) # Priority 0: heartbeat, Priority 1: otherwise
 
         self.rx_lock = threading.Lock()
         self.tx_lock = threading.Lock()
