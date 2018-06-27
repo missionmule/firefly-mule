@@ -24,7 +24,7 @@ def setup_logging():
     ch.setFormatter(formatter)
     logging.getLogger().addHandler(ch)
 
-def sigint_handler(signum, frame, threads):
+def signal_handler(signum, frame, threads):
     logging.info("Received %s" % s)
 
     logging.info("Cleaning up...")
@@ -35,7 +35,7 @@ def sigint_handler(signum, frame, threads):
     time.sleep(3) # Wait for cleanup
 
     logging.info("Bye.")
-    
+
     exit()
 
 def main():
