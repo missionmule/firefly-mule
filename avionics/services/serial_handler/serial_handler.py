@@ -17,10 +17,6 @@ class SerialHandler(object):
 
     def __init__(self, _port, _baudrate, _timeout):
 
-        self._write_lock = threading.Lock()     # Safety first
-
-        self._alive = False     # Made true on r/w thread spawn
-
         self.rx_queue = queue.Queue(maxsize=50)
         self.tx_queue = queue.PriorityQueue(maxsize=50) # Priority 0: heartbeat, Priority 1: otherwise
 
@@ -87,6 +83,8 @@ class SerialHandler(object):
                     self.tx_lock.release()
                     logging.debug('TX: %s', data[1])
                     self.serial.write(data[1])
+                    self.tx_queue.task_done()
+                    
                 except:
                     logging.exception('Serial write failure') # Probably get disconnected
                     break

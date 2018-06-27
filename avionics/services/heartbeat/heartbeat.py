@@ -13,7 +13,7 @@ class Heartbeat(object):
         logging.info('Heartbeat initiated')
 
         while self._alive:
-            if is_downloading.is_set():
+            if is_downloading.is_set(): # Analagous to if "is_downloading = True:"
                 tx_lock.acquire()
                 self.tx_queue.put((0,b'\x01')) # Tuple with 0 (top) prority
                 tx_lock.release()

@@ -33,10 +33,7 @@ class DataStationHandler(object):
         self.download_thread = None
         self._alive = True
 
-        self.is_downloading = threading.Event()
-        # self.is_downloading.clear() # Set flag to false
-
-    def run(self, rx_lock, e):
+    def run(self, rx_lock, is_downloading):
         """Loop forever and handle downloads as data stations are reached"""
 
         while self._alive:
@@ -44,7 +41,7 @@ class DataStationHandler(object):
             if not self.rx_queue.empty():    # You've got mail!
 
                 # Update system status (used by heartbeat)
-                e.set()
+                is_downloading.set()
 
                 # Get data station ID as message from rx_queue
                 rx_lock.acquire()
@@ -93,7 +90,7 @@ class DataStationHandler(object):
                 self.rx_queue.task_done()
 
                 # Update system status (for heartbeat)
-                e.clear()
+                is_downloading.clear() # Analagous to is_downloading = False
 
             else:
                 time.sleep(1)   # Check RX queue again in 1 second

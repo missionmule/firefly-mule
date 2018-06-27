@@ -47,7 +47,7 @@ def main():
     # Maintains list of active services (serial, data station, heartbeat)
     services = []
 
-    e = threading.Event()
+    is_downloading = threading.Event()
 
     # Serial handler with public rx and tx queues
     ser = SerialHandler('/dev/ttyAMA0', 57600, 1)
@@ -62,12 +62,12 @@ def main():
     hb = Heartbeat(ser.tx_queue, 500)
     services.append(hb)
 
-    thread_data_station_handler = threading.Thread(target=dl.run, args=(ser.rx_lock, e))
+    thread_data_station_handler = threading.Thread(target=dl.run, args=(ser.rx_lock, is_downloading))
     thread_data_station_handler.daemon = True
     thread_data_station_handler.name = 'Data Station Communication Handler'
     thread_data_station_handler.start()
 
-    thread_heartbeat = threading.Thread(target=hb.run, args=(ser.tx_lock, e))
+    thread_heartbeat = threading.Thread(target=hb.run, args=(ser.tx_lock, is_downloading))
     thread_heartbeat.daemon = True
     thread_heartbeat.name = 'Heartbeat'
     thread_heartbeat.start()
