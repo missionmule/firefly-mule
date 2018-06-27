@@ -54,7 +54,7 @@ class SerialHandler(object):
                 logging.error("Failed to connect to serial device. Retrying connection...")
                 time.sleep(3)
 
-    def rreader(self):
+    def reader(self):
         """Loop forever and accept messages from autopilot into RX queue"""
 
         logging.debug('Serial reader thread started')
