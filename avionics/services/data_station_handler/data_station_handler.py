@@ -53,36 +53,37 @@ class DataStationHandler(object):
                 #     self.xbee.send_command(data_station_id, 'POWER_ON')
 
                 # Create a download worker with reference to current_data_station
-                if not "DEVELOPMENT" in os.environ: # This is the real world (ahhh!)
-
-                    download_worker = Download(data_station_id,
-                                               self.connection_timeout_millis,
-                                               self.read_write_timeout_millis)
-
-
-                    try:
-                        # This throws an error if the connection times out
-                        download_worker.connect()
-
-                        # Spawn download thread
-                        self.download_thread = threading.Thread(target=download_worker.start)
-                        self.download_thread.start()
-
-                        # Attempt to join the thread after timeout, if still alive the download timed out
-                        self.download_thread.join(self.overall_timeout_millis)
-
-                        if download_thread.is_alive():
-                            logging.info("Download timeout: Download cancelled")
-                        else:
-                            logging.info("Download complete")
-
-                    except Exception as e:
-                        logging.error(e)
-
-                else: # Simulate download
-                    r = random.randint(10,100)
-                    logging.debug('Simulating download for %i seconds', r)
-                    time.sleep(r) # "Download" for random time between 10 and 100 seconds
+                # if not "DEVELOPMENT" in os.environ: # This is the real world (ahhh!)
+                #
+                #     download_worker = Download(data_station_id,
+                #                                self.connection_timeout_millis,
+                #                                self.read_write_timeout_millis)
+                #
+                #
+                #     try:
+                #         # This throws an error if the connection times out
+                #         download_worker.connect()
+                #
+                #         # Spawn download thread
+                #         self.download_thread = threading.Thread(target=download_worker.start)
+                #         self.download_thread.start()
+                #
+                #         # Attempt to join the thread after timeout, if still alive the download timed out
+                #         self.download_thread.join(self.overall_timeout_millis)
+                #
+                #         if download_thread.is_alive():
+                #             logging.info("Download timeout: Download cancelled")
+                #         else:
+                #             logging.info("Download complete")
+                #
+                #     except Exception as e:
+                #         logging.error(e)
+                #
+                # else: # Simulate download
+                
+                r = random.randint(10,100)
+                logging.debug('Simulating download for %i seconds', r)
+                time.sleep(r) # "Download" for random time between 10 and 100 seconds
 
                 # Mark task as complete, even if it fails
                 self.rx_queue.task_done()
