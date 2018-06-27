@@ -27,7 +27,7 @@ def main():
     logging.info('\n\n--- mission start ---')
 
     # Serial handler with public rx and tx queues
-    ser = SerialHandler('/dev/ttyAMA0', 57600, 1)
+    ser = SerialHandler('/dev/ttyAMA0', 57600)
     ser.connect()
 
     # Data station communication handling
