@@ -68,7 +68,7 @@ class SerialHandler(object):
 
         logging.debug('Serial reader thread started')
         while self._alive:
-            if self.serial.in_waiting():
+            if self.serial.in_waiting() > 0:
                 try:
                     data = self.serial.readline()
                     if data:
