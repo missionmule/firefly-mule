@@ -26,6 +26,7 @@ class DataStationHandler(object):
         self.is_downloading = False
         self.connection_timeout_millis = _connection_timeout_millis
         self.read_write_timeout_millis = _read_write_timeout_millis
+        self.overall_timeout_millis = _overall_timeout_millis
         self.rx_queue = _rx_queue
         self.xbee = XBee()
 
@@ -51,8 +52,8 @@ class DataStationHandler(object):
 
                 # Create a download worker with reference to current_data_station
                 download_worker = Download(data_station_id,
-                                           self._connection_timeout_millis,
-                                           self._read_write_timeout_millis)
+                                           self.connection_timeout_millis,
+                                           self.read_write_timeout_millis)
 
                 if not "DEVELOPMENT" in os.environ: # This is the real world (ahhh!)
                     try:
@@ -64,7 +65,7 @@ class DataStationHandler(object):
                         download_thread.start()
 
                         # Attempt to join the thread after timeout, if still alive the download timed out
-                        download_thread.join(self._overall_timeout_millis)
+                        download_thread.join(self.overall_timeout_millis)
 
                         if download_thread.is_alive():
                             logging.info("Download timeout: Download cancelled")
