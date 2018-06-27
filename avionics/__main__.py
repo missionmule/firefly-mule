@@ -5,6 +5,8 @@ import sys
 import threading
 import queue
 
+from functools import partial
+
 from services import DataStationHandler
 from services import Heartbeat
 from services import SerialHandler
@@ -24,13 +26,13 @@ def setup_logging():
     ch.setFormatter(formatter)
     logging.getLogger().addHandler(ch)
 
-def signal_handler(signum, frame, threads):
+def signal_handler(services, signum, frame):
     logging.info("Received %s" % s)
 
     logging.info("Cleaning up...")
 
-    for thread in threads:
-        thread.stop()
+    for service in services:
+        service.stop()
 
     time.sleep(3) # Wait for cleanup
 
@@ -78,7 +80,7 @@ def main():
     thread_serial_reader.start()
 
     # Gracefully handle SIGINT
-    signal.signal(signal.SIGINT, signal_handler(services))
+    signal.signal(signal.SIGINT, partial(signal_handler, services))
 
     # Wait for daemon threads to return
     thread_data_station_handler.join()
