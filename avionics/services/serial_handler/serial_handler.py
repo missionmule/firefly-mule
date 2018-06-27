@@ -53,18 +53,31 @@ class SerialHandler(object):
 
         self._alive = True
 
-        # self.thread_write = threading.Thread(target=self._writer())
-        # self.thread_write.daemon = True
-        # self.thread_write.name = 'Serial Writer'
-        # self.thread_write.start()
+        while self._alive:
+            # Read anything waiting
+            try:
+                data = self.serial.readline()
+                if data:
+                    logging.debug('RX: %s', data)
+                    self.rx_lock.acquire()
+                    self.rx_queue.put(data)
+                    self.rx_lock.release()
+            except:
+                logging.exception('Serial read failure') # Probably get disconnected
+                break
 
-        self.thread_read = threading.Thread(target=self._reader())
-        self.thread_read.daemon = True
-        self.thread_read.name = 'Serial Reader'
-        self.thread_read.start()
+            try:
+                if not self.tx_queue.empty()
+                    self.tx_lock.acquire()
+                    data = self.tx_queue.get() # Get message in PriorityQueue tuple (0,'0x00')
+                    self.tx_lock.release()
+                    logging.debug('TX: %s', data[1])
+                    self.serial.write(data[1])
+            except:
+                logging.exception('Serial write failure') # Probably get disconnected
+                break
 
-        self._writer()
-
+            self._stop()
 
 
     def _reader(self):
