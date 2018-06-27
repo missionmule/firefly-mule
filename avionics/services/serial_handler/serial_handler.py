@@ -62,7 +62,7 @@ class SerialHandler(object):
         while self._alive:
             try:
                 data = self.serial.readline()
-                if data:
+                if data and data != b'\x00': # Ignore NULL bytes
                     logging.debug('[1] RX queue size: %i', self.rx_queue.qsize())
                     logging.debug('RX: %s', data)
                     self.rx_lock.acquire()

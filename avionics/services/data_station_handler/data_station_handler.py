@@ -85,7 +85,7 @@ class DataStationHandler(object):
                 #
                 # else: # Simulate download
 
-                r = random.randint(10,100)
+                r = random.randint(10,15)
                 logging.debug('Simulating download for %i seconds', r)
                 time.sleep(r) # "Download" for random time between 10 and 100 seconds
 
