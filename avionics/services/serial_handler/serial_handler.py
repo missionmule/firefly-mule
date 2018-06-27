@@ -34,7 +34,7 @@ class SerialHandler(object):
         while True:
             try:
                 if not "DEVELOPMENT" in os.environ: # Don't connect to serial while in development
-                    self.serial = serial.Serial( port=self.port, baudrate=self.baudrate, timeout=self.timeout)
+                    self.serial = serial.Serial(self.port, self.baudrate, self.timeout)
                     logging.info("Connected to serial")
                 else:
                     logging.info("In development mode, not connecting to serial")
