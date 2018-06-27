@@ -67,7 +67,7 @@ class XBee(object):
             return False
 
         logging.debug("xBee port write: %s" % self.preamble_out)
-        self.xbee_port.write(self.preamble_out)
+        self.xbee_port.write(self.preamble_out.encode('utf-8'))
 
         logging.debug("xBee port write: %s" % self.data_station_idens[identity])
         self.xbee_port.write(self.data_station_idens[identity])

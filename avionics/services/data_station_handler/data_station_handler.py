@@ -44,10 +44,10 @@ class DataStationHandler(object):
                 data_station_id = self.rx_queue.get()
                 rx_lock.release()
 
-                # Wake up data station
-                self.xbee.send_command(data_station_id, 'POWER_ON')
-                while not self.xbee.acknowledge():
-                    self.xbee.send_command(data_station_id, 'POWER_ON')
+                # # Wake up data station
+                # self.xbee.send_command(data_station_id, 'POWER_ON')
+                # while not self.xbee.acknowledge():
+                #     self.xbee.send_command(data_station_id, 'POWER_ON')
 
                 # Create a download worker with reference to current_data_station
                 download_worker = Download(data_station_id,
