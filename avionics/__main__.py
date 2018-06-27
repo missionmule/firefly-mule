@@ -60,12 +60,14 @@ def main():
     hb = Heartbeat(ser.tx_queue, 500)
     services.append(hb)
 
-    thread_data_station_handler = threading.Thread(target=dl.run, args=(ser.rx_lock,))
+    is_downloading = False
+
+    thread_data_station_handler = threading.Thread(target=dl.run, args=(ser.rx_lock,is_downloading))
     thread_data_station_handler.daemon = True
     thread_data_station_handler.name = 'Data Station Communication Handler'
     thread_data_station_handler.start()
 
-    thread_heartbeat = threading.Thread(target=hb.run, args=(ser.tx_lock,dl.is_downloading))
+    thread_heartbeat = threading.Thread(target=hb.run, args=(ser.tx_lock,is_downloading))
     thread_heartbeat.daemon = True
     thread_heartbeat.name = 'Heartbeat'
     thread_heartbeat.start()

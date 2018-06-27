@@ -63,8 +63,8 @@ class SerialHandler(object):
             try:
                 data = self.serial.readline()
                 if data:
-                    logging.debug('RX: %s', data)
                     logging.debug('[1] RX queue size: %i', self.rx_queue.qsize())
+                    logging.debug('RX: %s', data)
                     self.rx_lock.acquire()
                     self.rx_queue.put(data)
                     self.rx_lock.release()
@@ -91,11 +91,6 @@ class SerialHandler(object):
                     logging.debug('TX: %s', data[1])
                     logging.debug('[2] TX queue size: %i', self.tx_queue.qsize())
                     self.serial.write(data[1])
-
-                    self.tx_lock.acquire()
-                    self.tx_queue.task_done()
-                    self.tx_lock.release()
-                    
                 except:
                     logging.exception('Serial write failure') # Probably get disconnected
                     break
