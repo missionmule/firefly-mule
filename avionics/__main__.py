@@ -2,6 +2,7 @@ import logging
 import serial
 import signal
 import sys
+import time
 import threading
 import queue
 

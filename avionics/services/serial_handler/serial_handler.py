@@ -37,7 +37,7 @@ class SerialHandler(object):
 
     def stop(self):
         """Stop and close connection"""
-        logging.debug('Stopping serial connection')
+        logging.info('Stopping serial handler...')
         self._alive = False
 
     def connect(self):
@@ -54,22 +54,7 @@ class SerialHandler(object):
                 logging.error("Failed to connect to serial device. Retrying connection...")
                 time.sleep(3)
 
-    def run(self):
-        """Spawn infinite looping reader and writer threads"""
-
-        self._alive = True
-
-        self.thread_write = threading.Thread(target=self._writer())
-        self.thread_write.daemon = True
-        self.thread_write.name = 'Serial Writer'
-        self.thread_write.start()
-
-        self.thread_read = threading.Thread(target=self._reader())
-        self.thread_read.daemon = True
-        self.thread_read.name = 'Serial Reader'
-        self.thread_read.start()
-
-    def _reader(self):
+    def rreader(self):
         """Loop forever and accept messages from autopilot into RX queue"""
 
         logging.debug('Serial reader thread started')
@@ -87,9 +72,9 @@ class SerialHandler(object):
                 break
 
         self._alive = False
-        logging.debug('Serial reader thread terminated')
+        logging.error('Serial reader thread terminated')
 
-    def _writer(self):
+    def writer(self):
         """Loop forever and write messages from TX queue"""
 
         logging.debug('Serial writer thread started')
@@ -106,4 +91,5 @@ class SerialHandler(object):
                     logging.exception('Serial write failure') # Probably get disconnected
                     break
 
-        logging.debug('Serial writer thread terminated')
+        self._alive = False
+        logging.error('Serial writer thread terminated')

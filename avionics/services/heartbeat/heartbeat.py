@@ -28,4 +28,5 @@ class Heartbeat(object):
         logging.error('Heartbeat terminated')
 
     def stop(self):
+        logging.info("Stoping heartbeat...")
         self._alive = False

@@ -95,6 +95,9 @@ class DataStationHandler(object):
             else:
                 time.sleep(1)   # Check RX queue again in 1 second
 
+        logging.error("Data station handler terminated")
+
     def stop(self):
+        logging.info("Stopping data station handler...")
         self._alive = False
-        self.download_thread.join()
+        #self.download_thread.join()
