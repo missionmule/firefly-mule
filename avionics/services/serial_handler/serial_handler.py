@@ -68,17 +68,17 @@ class SerialHandler(object):
 
         logging.debug('Serial reader thread started')
         while self._alive:
-            if self.serial.in_waiting() > 0:
-                try:
-                    data = self.serial.readline()
-                    if data:
-                        logging.debug('RX: %s', data)
-                        self.rx_lock.acquire()
-                        self.rx_queue.put(data)
-                        self.rx_lock.release()
-                except:
-                    logging.exception('Serial read failure') # Probably get disconnected
-                    break
+            #if (self.serial.in_waiting() > 0):
+            try:
+                data = self.serial.readline()
+                if data:
+                    logging.debug('RX: %s', data)
+                    self.rx_lock.acquire()
+                    self.rx_queue.put(data)
+                    self.rx_lock.release()
+            except:
+                logging.exception('Serial read failure') # Probably get disconnected
+                break
 
         self._alive = False
         logging.debug('Serial reader thread terminated')
