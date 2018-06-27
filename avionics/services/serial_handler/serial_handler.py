@@ -63,6 +63,7 @@ class SerialHandler(object):
 
     def _reader(self):
         """Loop forever and accept messages from autopilot into RX queue"""
+
         logging.debug('Serial reader thread started')
         while self._alive:
             try:
@@ -90,7 +91,7 @@ class SerialHandler(object):
                     tx_lock.acquire()
                     msg = self.tx_queue.get()
                     tx_lock.release()
-
+                    logging.debug('TX: %s', msg)
                     self.serial.write(b''.join(msg))
                 except:
                     logging.exception('Serial write failure') # Probably get disconnected
