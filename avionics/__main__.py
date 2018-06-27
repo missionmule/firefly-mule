@@ -31,7 +31,7 @@ def main():
     ser.connect()
 
     # Data station communication handling
-    dl = DataStationHandler(20000,20000, ser.rx_queue)
+    dl = DataStationHandler(20000,20000, 60000, ser.rx_queue)
 
     # Heartbeat pushed to serial tx_queue every 500ms
     hb = Heartbeat(dl.is_downloading, ser.tx_queue, 500)

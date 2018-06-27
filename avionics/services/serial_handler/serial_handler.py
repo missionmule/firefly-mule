@@ -10,6 +10,9 @@ class SerialHandler(object):
     This class handles all serial communication via application-public RX
     and TX queues which are used by other application services.
 
+    This class is largely based off of an example from pyserial:
+    https://github.com/pyserial/pyserial/blob/master/examples/rfc2217_server.py
+
     """
 
     def __init__(self, port, baudrate, timeout):
