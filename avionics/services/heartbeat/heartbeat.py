@@ -20,7 +20,7 @@ class Heartbeat(object):
                 logging.debug('Heartbeat: downloading')
             else:
                 tx_lock.acquire()
-                self.tx_queue.put((0,'\x00')) # Tuple with 0 (top) prority
+                self.tx_queue.put((0,b'\x00')) # Tuple with 0 (top) prority
                 tx_lock.release()
                 logging.debug('Heartbeat: idle')
             time.sleep(self.frequency_millis / 1000)

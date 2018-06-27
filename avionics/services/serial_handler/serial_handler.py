@@ -71,7 +71,7 @@ class SerialHandler(object):
                 if data:
                     logging.debug('RX: %s', data)
                     self.rx_lock.acquire()
-                    self.rx_queue.put(b''.join(data))
+                    self.rx_queue.put(data)
                     self.rx_lock.release()
             except:
                 logging.exception('Serial read failure') # Probably get disconnected
@@ -89,10 +89,10 @@ class SerialHandler(object):
             while not self.tx_queue.empty():
                 try:
                     self.tx_lock.acquire()
-                    msg = self.tx_queue.get() # Get message in PriorityQueue tuple (0,'0x00')
+                    data = self.tx_queue.get() # Get message in PriorityQueue tuple (0,'0x00')
                     self.tx_lock.release()
-                    logging.debug('TX: %s', msg[1])
-                    self.serial.write(b''.join(msg[1]))
+                    logging.debug('TX: %s', data[1])
+                    self.serial.write(data[1])
                 except:
                     logging.exception('Serial write failure') # Probably get disconnected
                     break
