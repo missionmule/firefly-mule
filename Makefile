@@ -5,6 +5,6 @@ test:
 	python3 setup.py test
 
 run:
-	python3 firefly-mule
+	python3 avionics
 
 .PHONY: init test

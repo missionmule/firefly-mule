@@ -1,3 +1,4 @@
+import time
 import threading
 
 from .download import Download
@@ -19,7 +20,8 @@ class DataStationHandler(object):
 
     """
 
-    def __init__(self, _connection_timeout_millis, _read_write_timeout_millis, _rx_queue):
+    def __init__(self, _connection_timeout_millis, _read_write_timeout_millis,
+        _overall_timeout_millis, _rx_queue):
         self.is_downloading = False
         self.connection_timeout_millis = _connection_timeout_millis
         self.read_write_timeout_millis = _read_write_timeout_millis
@@ -48,27 +50,32 @@ class DataStationHandler(object):
 
                 # Create a download worker with reference to current_data_station
                 download_worker = Download(data_station_id,
-                                           self.DOWNLOAD_CONNECTION_TIMEOUT_SECONDS,
-                                           self.DOWNLOAD_READ_WRITE_TIMEOUT_SECONDS)
+                                           self._connection_timeout_millis,
+                                           self._read_write_timeout_millis)
 
-                try:
-                    # This throws an error if the connection times out
-                    download_worker.connect()
+                if not "DEVELOPMENT" in os.environ: # This is the real world (ahhh!)
+                    try:
+                        # This throws an error if the connection times out
+                        download_worker.connect()
 
-                    # Spawn download thread
-                    download_thread = threading.Thread(target=download_worker.start)
-                    download_thread.start()
+                        # Spawn download thread
+                        download_thread = threading.Thread(target=download_worker.start)
+                        download_thread.start()
 
-                    # Attempt to join the thread after timeout, if still alive the download timed out
-                    download_thread.join(self.OVERALL_DOWNLOAD_TIMEOUT_SECONDS)
+                        # Attempt to join the thread after timeout, if still alive the download timed out
+                        download_thread.join(self._overall_timeout_millis)
 
-                    if download_thread.is_alive():
-                        logging.info("Download timeout: Download cancelled")
-                    else:
-                        logging.info("Download complete")
+                        if download_thread.is_alive():
+                            logging.info("Download timeout: Download cancelled")
+                        else:
+                            logging.info("Download complete")
 
-                except Exception as e:
-                    logging.error(e)
+                    except Exception as e:
+                        logging.error(e)
+                else: # Simulate download
+                    r = random.randint(10,100)
+                    logging.debug('Simulating download for %i seconds', r)
+                    time.sleep(r) # "Download" for random time between 10 and 100 seconds
 
                 # Mark task as complete, even if it fails
                 rx_queue.task_done()

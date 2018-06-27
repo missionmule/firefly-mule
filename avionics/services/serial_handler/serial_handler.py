@@ -1,4 +1,7 @@
 import logging
+import os
+import serial
+import threading
 import queue
 
 class SerialHandler(object):
@@ -9,21 +12,33 @@ class SerialHandler(object):
 
     """
 
-    def __init__(self, _serial_instance, _is_downloading):
+    def __init__(self, port, baudrate, timeout):
 
         self._write_lock = threading.Lock()     # Safety first
 
         self._alive = False     # Made true on r/w thread spawn
 
-        self.rx_queue = Queue.Queue()
-        self.tx_queue = Queue.PriorityQueue() # Priority 0: heartbeat, Priority 1: otherwise
+        self.rx_queue = queue.Queue()
+        self.tx_queue = queue.PriorityQueue() # Priority 0: heartbeat, Priority 1: otherwise
 
         self.rx_lock = threading.Lock()
         self.tx_lock = threading.Lock()
 
-        self._is_downloading = _is_downloading    # Boolean controlled by download
+        self.serial = None
 
-        self.serial = _serial_instance
+    def connect(self):
+        """Connect to serial port"""
+        while True:
+            try:
+                if not "DEVELOPMENT" in os.environ: # Don't connect to serial while in development
+                    self.serial = serial.Serial( port=self.port, baudrate=self.baudrate, timeout=self.timeout)
+                    logging.info("Connected to serial")
+                else:
+                    logging.info("In development mode, not connecting to serial")
+                break
+            except serial.SerialException:
+                logging.error("Failed to connect to serial device. Retrying connection...")
+                time.sleep(3)
 
     def run(self):
         """Spawn infinite looping reader and writer threads"""
@@ -52,7 +67,7 @@ class SerialHandler(object):
                     self.rx_queue.put(b''.join(data))
                     self.rx_lock.release()
             except:
-                logging.error('{}'.format(msg)) # Probably get disconnected
+                logging.exception('Serial read failure') # Probably get disconnected
                 break
 
         self._alive = False
@@ -72,7 +87,7 @@ class SerialHandler(object):
 
                     self.serial.write(b''.join(msg))
                 except:
-                    logging.error('{}'.format(msg)) # Probably get disconnected
+                    logging.exception('Serial write failure') # Probably get disconnected
                     break
 
         logging.debug('Serial writer thread terminated')
