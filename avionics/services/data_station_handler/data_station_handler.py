@@ -53,11 +53,13 @@ class DataStationHandler(object):
                 #     self.xbee.send_command(data_station_id, 'POWER_ON')
 
                 # Create a download worker with reference to current_data_station
-                download_worker = Download(data_station_id,
-                                           self.connection_timeout_millis,
-                                           self.read_write_timeout_millis)
-
                 if not "DEVELOPMENT" in os.environ: # This is the real world (ahhh!)
+
+                    download_worker = Download(data_station_id,
+                                               self.connection_timeout_millis,
+                                               self.read_write_timeout_millis)
+
+
                     try:
                         # This throws an error if the connection times out
                         download_worker.connect()
@@ -76,6 +78,7 @@ class DataStationHandler(object):
 
                     except Exception as e:
                         logging.error(e)
+
                 else: # Simulate download
                     r = random.randint(10,100)
                     logging.debug('Simulating download for %i seconds', r)
