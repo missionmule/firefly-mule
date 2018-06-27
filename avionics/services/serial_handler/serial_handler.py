@@ -15,7 +15,7 @@ class SerialHandler(object):
 
     """
 
-    def __init__(self, _port, _baudrate, _timeout):
+    def __init__(self, _port, _baudrate):
 
         self._write_lock = threading.Lock()     # Safety first
 
@@ -29,7 +29,6 @@ class SerialHandler(object):
 
         self.port = _port
         self.baudrate = _baudrate
-        self.timeout = _timeout
 
         self.serial = None
 
@@ -38,7 +37,7 @@ class SerialHandler(object):
         while True:
             try:
                 if not "DEVELOPMENT" in os.environ: # Don't connect to serial while in development
-                    self.serial = serial.Serial(self.port, self.baudrate, self.timeout)
+                    self.serial = serial.Serial(self.port, self.baudrate)
                     logging.info("Connected to serial")
                 else:
                     logging.info("In development mode, not connecting to serial")
