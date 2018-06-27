@@ -41,44 +41,44 @@ def signal_handler(signum, frame, threads):
 def main():
     logging.info('\n\n--- mission start ---')
 
-    threads = []
+    # Maintains list of active services (serial, data station, heartbeat)
+    services = []
 
     # Serial handler with public rx and tx queues
     ser = SerialHandler('/dev/ttyAMA0', 57600)
     ser.connect()
+    services.append(ser)
 
     # Data station communication handling
     dl = DataStationHandler(20000,20000, 60000, ser.rx_queue)
+    services.append(dl)
 
     # Heartbeat pushed to serial tx_queue every 500ms
     hb = Heartbeat(dl.is_downloading, ser.tx_queue, 500)
+    services.append(hb)
 
     thread_data_station_handler = threading.Thread(target=dl.run, args=(ser.rx_lock,))
     thread_data_station_handler.daemon = True
     thread_data_station_handler.name = 'Data Station Communication Handler'
     thread_data_station_handler.start()
-    threads.append(thread_data_station_handler)
 
     thread_heartbeat = threading.Thread(target=hb.run, args=(ser.tx_lock,))
     thread_heartbeat.daemon = True
     thread_heartbeat.name = 'Heartbeat'
     thread_heartbeat.start()
-    threads.append(thread_heartbeat)
 
     thread_serial_writer = threading.Thread(target=ser._writer)
     thread_serial_writer.daemon = True
     thread_serial_writer.name = 'Serial Communication Writer'
     thread_serial_writer.start()
-    threads.append(thread_serial_writer)
 
     thread_serial_reader = threading.Thread(target=ser._reader)
     thread_serial_reader.daemon = True
     thread_serial_reader.name = 'Serial Communication Reader'
     thread_serial_reader.start()
-    threads.append(thread_serial_reader)
 
     # Gracefully handle SIGINT
-    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler(services))
 
     # Wait for daemon threads to return
     thread_data_station_handler.join()
