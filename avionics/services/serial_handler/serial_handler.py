@@ -88,9 +88,9 @@ class SerialHandler(object):
         while self._alive:
             while not self.tx_queue.empty():
                 try:
-                    tx_lock.acquire()
+                    self.tx_lock.acquire()
                     msg = self.tx_queue.get()
-                    tx_lock.release()
+                    self.tx_lock.release()
                     logging.debug('TX: %s', msg)
                     self.serial.write(b''.join(msg))
                 except:
