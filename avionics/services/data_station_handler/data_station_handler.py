@@ -41,7 +41,7 @@ class DataStationHandler(object):
 
                 # Get data station ID as message from rx_queue
                 rx_lock.acquire()
-                data_station_id = rx_queue.get()
+                data_station_id = self.rx_queue.get()
                 rx_lock.release()
 
                 # Wake up data station
@@ -79,7 +79,7 @@ class DataStationHandler(object):
                     time.sleep(r) # "Download" for random time between 10 and 100 seconds
 
                 # Mark task as complete, even if it fails
-                rx_queue.task_done()
+                self.rx_queue.task_done()
 
                 # Update system status (for heartbeat)
                 self.is_downloading = False
