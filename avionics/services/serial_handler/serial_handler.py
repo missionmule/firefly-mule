@@ -60,14 +60,15 @@ class SerialHandler(object):
 
         logging.debug('Serial reader thread started')
         while self._alive:
-            #if (self.serial.in_waiting() > 0):
             try:
                 data = self.serial.readline()
                 if data:
                     logging.debug('RX: %s', data)
+                    logging.debug('[1] RX queue size: %i', self.rx_queue.qsize())
                     self.rx_lock.acquire()
                     self.rx_queue.put(data)
                     self.rx_lock.release()
+                    logging.debug('[2] RX queue size: %i', self.rx_queue.qsize())
             except:
                 logging.exception('Serial read failure') # Probably get disconnected
                 break
@@ -84,9 +85,11 @@ class SerialHandler(object):
             while not self.tx_queue.empty():
                 try:
                     self.tx_lock.acquire()
+                    logging.debug('[1] TX queue size: %i', self.rx_queue.qsize())
                     data = self.tx_queue.get() # Get message in PriorityQueue tuple (0,'0x00')
                     self.tx_lock.release()
                     logging.debug('TX: %s', data[1])
+                    logging.debug('[2] TX queue size: %i', self.rx_queue.qsize())
                     self.serial.write(data[1])
                 except:
                     logging.exception('Serial write failure') # Probably get disconnected
