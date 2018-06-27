@@ -67,7 +67,7 @@ class SerialHandler(object):
                 break
 
             try:
-                if not self.tx_queue.empty()
+                if not self.tx_queue.empty():
                     self.tx_lock.acquire()
                     data = self.tx_queue.get() # Get message in PriorityQueue tuple (0,'0x00')
                     self.tx_lock.release()
