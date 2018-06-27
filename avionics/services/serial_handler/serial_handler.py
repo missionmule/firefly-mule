@@ -40,8 +40,6 @@ class SerialHandler(object):
         logging.debug('Stopping serial connection')
         if self._alive:
             self._alive = False
-            self.thread_read.join()
-            self.thread_write.join()
 
     def connect(self):
         """Connect to serial port"""
