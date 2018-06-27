@@ -38,6 +38,8 @@ class DataStationHandler(object):
 
         while self._alive:
 
+            logging.debug("[dl] is_downloading: %s", is_downloading)
+
             if not self.rx_queue.empty():    # You've got mail!
 
                 # Update system status (used by heartbeat)
