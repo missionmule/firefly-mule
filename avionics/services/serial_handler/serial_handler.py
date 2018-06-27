@@ -91,6 +91,11 @@ class SerialHandler(object):
                     logging.debug('TX: %s', data[1])
                     logging.debug('[2] TX queue size: %i', self.tx_queue.qsize())
                     self.serial.write(data[1])
+
+                    self.tx_lock.acquire()
+                    self.tx_queue.task_done()
+                    self.tx_lock.release()
+                    
                 except:
                     logging.exception('Serial write failure') # Probably get disconnected
                     break
