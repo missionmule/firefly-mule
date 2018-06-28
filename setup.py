@@ -10,7 +10,7 @@ setup(name='firefly-mule',
       url='https://github.com/missionmule/firefly-mule',
       author='Zane Mountcastle',
       author_email='zane@missionmule.com',
-      packages=['firefly-mule'],
+      packages=['avionics'],
       python_requires='>=3.6',
       install_requires=[
           'paramiko',

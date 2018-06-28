@@ -1,27 +1,32 @@
 import logging
+import time
 
 class Heartbeat(object):
 
-    def __init__(self, _is_downloading, _tx_queue, _frequency_millis=1000):
+    def __init__(self, _tx_queue, _frequency_millis=1000):
 
-        self.is_downloading = _is_downloading
         self.tx_queue = _tx_queue
         self.frequency_millis = _frequency_millis          # Frequency of heartbeat in milliseconds
+        self._alive = True
 
-    def run(self, tx_lock):
+    def run(self, tx_lock, is_downloading):
         logging.info('Heartbeat initiated')
 
-        while True:
-            if (self.is_downloading):
+        while self._alive:
+            if is_downloading.is_set(): # Analagous to if "is_downloading = True:"
                 tx_lock.acquire()
-                self.tx_queue.put((0,'01')) # Tuple with 0 (top) prority
+                self.tx_queue.put((0,b'\x01')) # Tuple with 0 (top) prority
                 tx_lock.release()
                 logging.debug('Heartbeat: downloading')
             else:
                 tx_lock.acquire()
-                self.tx_queue.put((0,'00')) # Tuple with 0 (top) prority
+                self.tx_queue.put((0,b'\x00')) # Tuple with 0 (top) prority
                 tx_lock.release()
                 logging.debug('Heartbeat: idle')
             time.sleep(self.frequency_millis / 1000)
 
         logging.error('Heartbeat terminated')
+
+    def stop(self):
+        logging.info("Stoping heartbeat...")
+        self._alive = False
