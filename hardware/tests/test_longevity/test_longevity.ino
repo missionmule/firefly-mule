@@ -2,19 +2,22 @@
 
 SoftwareSerial raspi(10, 11); // RX, TX
 
+// Timers
 unsigned long timeStart;
 unsigned long heartbeatGap;
-int testLength = 180; // minutes
 unsigned long heartbeatTimer;
+unsigned long logTimer;
 unsigned long lap;
-int testRound = 0;
-unsigned long timer;
-char heartbeatOne = 100;
 unsigned long hearbeatMaxInterval = 10000;//ms, i.e. 10sec
 
+// Test Parameters
+int testLength = 180; // minutes
+int testRound = 0;
+char heartbeatOne = 100;
 bool heartbeatReceived = true;
 
 void setup() {
+  
   // start communication with companion computer
   raspi.begin(57600);
 
@@ -37,7 +40,9 @@ void loop() {
 
   // initialize the heartbeat timer
   heartbeatTimer = millis();
-  while (((millis() - timeStart)/60/1000) < (testLength)){
+
+  // begin test
+  while (testIsActive()){
     testRound++;
     lap = millis();
     
@@ -45,50 +50,31 @@ void loop() {
     Serial.print('\n'); Serial.println(formatMillis(millis()-timeStart));
     Serial.print("Proceding to data station number "); Serial.println(testRound);
     while ((((millis()-lap) < 3*1000)) && heartbeatReceived){
-        heartbeatReceived = checkHeartbeat();
-        if (!heartbeatReceived)
-          endTest(millis() - timeStart, "Heartbeat not received in over one second.");
-
-        if (millis()-timer > 2000){
-          timer = millis();
-          Serial.print("    Download Status: "); Serial.println(getStatus());
-        }
+        checkHeartbeat();
+        logDownloadStatus();
     }
     Serial.print("\nArrived at data station number "); Serial.println(testRound);
 
-    // send data station ID and wait for 5 seconds to aknowloedge
+    // send data station ID
     String strRound = String(testRound);
     for (int i = 0; i < 6; i++){
       if (strRound.charAt(i) != '\x00'){raspi.write(strRound.charAt(i));}
     }
     raspi.write('\n');
+
+    // wait for 5 seconds for payload to aknowloedge
     unsigned long downloadTimeStart = millis();
-
     lap = millis();
-    
     while ((((millis()-lap) < 5*1000)) && heartbeatReceived && (getStatus() = "Idle")){
-      heartbeatReceived = checkHeartbeat();
-      if (!heartbeatReceived)
-        endTest(millis() - timeStart, "Heartbeat not received in over one second.");
-
-      if (millis()-timer > 2000){
-          timer = millis();
-          Serial.print("    Download Status: "); Serial.println(getStatus());
-      }
+      checkHeartbeat();
+      logDownloadStatus();
     }
 
     // expect a downloading hearbeat now
     bool isDownloading = getStatus() == "Active";
     while (isDownloading && heartbeatReceived){
-      heartbeatReceived = checkHeartbeat();
-      if (!heartbeatReceived)
-        endTest(millis() - timeStart, "Heartbeat not received in over one second.");
-
-      if (millis()-timer > 2000){
-          timer = millis();
-          Serial.print("    Download Status: "); Serial.println(getStatus());
-      }
-        
+      checkHeartbeat();
+      logDownloadStatus();      
       if (heartbeatOne == '\0'){ isDownloading = false; }
     }
     Serial.print("\nDone downloading from data station "); Serial.println(testRound);
@@ -109,10 +95,15 @@ bool checkHeartbeat(){
 
   // check to make sure we are receiveing the heartbeats more than once per second
   heartbeatGap = millis() - heartbeatTimer;
-  if (heartbeatGap > hearbeatMaxInterval){
-    return false;
-  }
-  return true;
+  if (heartbeatGap > hearbeatMaxInterval)
+    heartbeatReceived = false;
+  else
+    heartbeatReceived = true;
+
+  // end test if hearbeat was not received in time
+  if (!heartbeatReceived)
+    endTest(millis() - timeStart, "Heartbeat not received in over one second.");
+  
 }
 
 String formatMillis(unsigned long milliseconds){
@@ -169,6 +160,17 @@ String getStatus(){
     heartbeatReceived = false;
     failureCause += heartbeatOne;
     endTest(millis() - timeStart, failureCause);
+  }
+}
+
+bool testIsActive(){
+  return ((millis() - timeStart)/60/1000) < (testLength);
+}
+
+void logDownloadStatus(){
+  if (millis()-logTimer > 2000){
+    logTimer = millis();
+    Serial.print("    Download Status: "); Serial.println(getStatus());
   }
 }
 
