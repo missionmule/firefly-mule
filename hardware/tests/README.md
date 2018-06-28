@@ -13,5 +13,5 @@ This code is made to conduct system-level tests on the BirdsEyeView payload. Rig
 2) Connect the UART pins of the payload to the Arduino (Arduino RX is 10, Arduino TX is 11).
 3) Connect the payload's GND line to the Arduino's GND line.
 4) Start the payloads software with `make run` in the firefly-mule directory.
-5) Upload the hardware.ino code to the Arduino and monitor serial terminal.
+5) Upload the test_hardware.ino code to the Arduino and monitor serial terminal.
     * The test duration can be edited at the top of the arduino sketch by changing the value of the `int testLength` variable.

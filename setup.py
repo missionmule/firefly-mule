@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='firefly-mule',
       version='0.1.0',
@@ -18,5 +18,5 @@ setup(name='firefly-mule',
           'pytest-runner'
       ],
       tests_require='pytest',
-      test_suite='tests',
+      test_suite='avionics/tests',
       zip_safe=False)
