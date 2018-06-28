@@ -12,6 +12,7 @@ setup(name='firefly-mule',
       author_email='zane@missionmule.com',
       packages=['avionics'],
       python_requires='>=3.6',
+      setup_requires=['nose', 'rednose'],
       install_requires=[
           'paramiko',
           'pyserial',
