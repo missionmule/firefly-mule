@@ -1,5 +1,5 @@
 # Hardware System Tests
-This code is made to conduct system-level tests on the BirdsEyeView payload. Right Using an Arduino, the BirdsEyeView FireFly6 Pro is emulated in order to simulate a flight from the perspective of the Payload's Raspberry Pi.
+This code is made to conduct system-level tests on the BirdsEyeView payload. Using an Arduino, the BirdsEyeView FireFly6 Pro is emulated in order to simulate a flight from the perspective of the Payload's Raspberry Pi.
 
 ## Materials
 

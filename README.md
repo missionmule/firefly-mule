@@ -9,7 +9,7 @@ Communication between the Mission Mule payload and airframe is minimal.
 
 ### TX Communication
 
-TX communication consists of a heartbeat at least once per second. The heartbeat message itself incorporates the status of the Mission Mule payload: either idle (message: `00\n`) or actively downloading from a data station (message: `01\n`).
+TX communication consists of a heartbeat at least once per second. The heartbeat message itself incorporates the status of the Mission Mule payload: either idle (message: `\x00`) or actively downloading from a data station (message: `\x01`).
 
 ### RX Communication
 
