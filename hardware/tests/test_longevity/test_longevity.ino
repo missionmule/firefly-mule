@@ -16,6 +16,8 @@ int testRound = 0;
 char heartbeatOne = 100;
 bool heartbeatReceived = true;
 
+String dataStationID[6] = {"demoncat", "streetcat", "falcon", "pussycat", "tom", "stalin"};
+
 void setup() {
   
   // start communication with companion computer
@@ -53,12 +55,13 @@ void loop() {
         checkHeartbeat();
         logDownloadStatus();
     }
-    Serial.print("\nArrived at data station number "); Serial.println(testRound);
+    Serial.print("Round "); Serial.println(testRound);
+    Serial.print("\nArrived at data station "); Serial.println(dataStationID[testRound]);
 
     // send data station ID
-    String strRound = String(testRound);
-    for (int i = 0; i < 6; i++){
-      if (strRound.charAt(i) != '\x00'){raspi.write(strRound.charAt(i));}
+    String strID = dataStationID[testRound%6];
+    for (int i = 0; i < strID.length(); i++){
+      raspi.write(strID.charAt(i));
     }
     raspi.write('\n');
 
