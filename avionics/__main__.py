@@ -1,4 +1,5 @@
 import logging
+import os
 import serial
 import signal
 import sys
@@ -13,7 +14,17 @@ from services import Heartbeat
 from services import SerialHandler
 
 def setup_logging():
-    # Set up logging [Logging levels in order of seriousness: DEBUG < INFO < WARNING < ERROR < CRITICAL]
+    """Set up logging [Logging levels in order of seriousness:
+
+    DEBUG < INFO < WARNING < ERROR < CRITICAL
+    """
+
+    # Only log when needed
+    if os.getenv("DEVELOPMENT") == 'True' or os.getenv("TESTING") == 'True':
+        logging_level = logging.DEBUG
+    else:
+        logging_level = logging.INFO
+
     logging.basicConfig(filename='flight.log',
                         level=logging.DEBUG,
                         format='%(asctime)s.%(msecs)03d %(levelname)s \t%(message)s',

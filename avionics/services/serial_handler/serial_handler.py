@@ -1,6 +1,7 @@
 import logging
 import os
 import serial
+import time
 import threading
 import queue
 
@@ -41,15 +42,25 @@ class SerialHandler(object):
         """Connect to serial port"""
         while True:
             try:
-                logging.debug(os.getenv('TESTING') == 'True')
-                if os.getenv('DEVELOPMENT') == 'False' and os.getenv('TESTING') == 'False': # Real world
-                    self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
-                    logging.info("Connected to serial")
-                elif os.getenv('TESTING') == 'True': # Create a loopback to test locally
+                if (os.getenv('TESTING') == 'True'):
                     self.serial = serial.serial_for_url('loop://', timeout=self.timeout)
                     logging.info("Testing: URL loopback initiated")
-                else:
+
+                elif (os.getenv('DEVELOPMENT') == 'True'):
                     logging.info("Development: not connecting to serial")
+
+                else: # This is the real world
+                    self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
+                    logging.info("Connected to serial")
+
+                # if ((os.getenv('DEVELOPMENT') == 'False' and os.getenv('TESTING') == 'False') or (os.getenv('DEVELOPMENT') == None and os.getenv('TESTING') == None)): # Real world
+                #     self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
+                #     logging.info("Connected to serial")
+                # elif os.getenv('TESTING') == 'True': # Create a loopback to test locally
+                #     self.serial = serial.serial_for_url('loop://', timeout=self.timeout)
+                #     logging.info("Testing: URL loopback initiated")
+                # else:
+                #     logging.info("Development: not connecting to serial")
                 break
             except serial.SerialException:
                 logging.error("Failed to connect to serial device. Retrying connection...")
