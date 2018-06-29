@@ -3,7 +3,7 @@ import time
 
 class Heartbeat(object):
 
-    def __init__(self, _tx_queue, _frequency_millis=1000):
+    def __init__(self, _tx_queue, _frequency_millis=500):
 
         self.tx_queue = _tx_queue
         self.frequency_millis = _frequency_millis          # Frequency of heartbeat in milliseconds

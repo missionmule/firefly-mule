@@ -15,7 +15,7 @@ class SerialHandler(object):
 
     """
 
-    def __init__(self, _port, _baudrate, _timeout):
+    def __init__(self, _port, _baudrate=57600, _timeout=1):
 
         self.rx_queue = queue.Queue(maxsize=50)
         self.tx_queue = queue.PriorityQueue(maxsize=50) # Priority 0: heartbeat, Priority 1: otherwise
@@ -31,21 +31,25 @@ class SerialHandler(object):
 
         self._alive = True
 
-
     def stop(self):
         """Stop and close connection"""
         logging.info('Stopping serial handler...')
         self._alive = False
+        self.serial.close()
 
     def connect(self):
         """Connect to serial port"""
         while True:
             try:
-                if not "DEVELOPMENT" in os.environ: # Don't connect to serial while in development
+                logging.debug(os.getenv('TESTING') == 'True')
+                if os.getenv('DEVELOPMENT') == 'False' and os.getenv('TESTING') == 'False': # Real world
                     self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
                     logging.info("Connected to serial")
+                elif os.getenv('TESTING') == 'True': # Create a loopback to test locally
+                    self.serial = serial.serial_for_url('loop://', timeout=self.timeout)
+                    logging.info("Testing: URL loopback initiated")
                 else:
-                    logging.info("In development mode, not connecting to serial")
+                    logging.info("Development: not connecting to serial")
                 break
             except serial.SerialException:
                 logging.error("Failed to connect to serial device. Retrying connection...")
@@ -56,19 +60,26 @@ class SerialHandler(object):
 
         logging.debug('Serial reader thread started')
         while self._alive:
-            try:
-                data = self.serial.readline()
-                if data and data != b'\x00': # Ignore NULL bytes (sent at beginning of connection)
-                    logging.debug('RX: %s', data)
-                    self.rx_lock.acquire()
-                    self.rx_queue.put(data)
-                    self.rx_lock.release()
-            except:
-                logging.exception('Serial read failure') # Probably get disconnected
-                break
+            self._read() # Pulled out to test
 
         self._alive = False
         logging.error('Serial reader thread terminated')
+
+    def _read(self):
+        try:
+            if os.getenv('DEVELOPMENT') == 'False':
+                data = self.serial.readline()
+            else:
+                data = None
+
+            if data and data != b'\x00': # Ignore NULL bytes (sent at beginning of connection)
+                logging.debug('RX: %s', data)
+                self.rx_lock.acquire()
+                self.rx_queue.put(data.decode())
+                self.rx_lock.release()
+        except:
+            logging.exception('Serial read failure') # Probably get disconnected
+            self._alive = False
 
     def writer(self):
         """Loop forever and write messages from TX queue"""
@@ -77,17 +88,25 @@ class SerialHandler(object):
 
         while self._alive:
             while not self.tx_queue.empty():
-                try:
-                    self.tx_lock.acquire()
-                    data = self.tx_queue.get() # Get message in PriorityQueue tuple (0,'0x00')
-                    self.tx_lock.release()
-                    logging.debug('TX: %s', data[1])
-                    self.serial.write(data[1])
-                    self.tx_queue.task_done()
-                    
-                except:
-                    logging.exception('Serial write failure') # Probably get disconnected
-                    break
+                self._write()   # Pulled out to test
 
         self._alive = False
         logging.error('Serial writer thread terminated')
+
+    def _write(self):
+        try:
+            self.tx_lock.acquire()
+            data = self.tx_queue.get() # Get message in PriorityQueue tuple (0,'0x00')
+            self.tx_lock.release()
+            logging.debug('TX: %s', data[1])
+
+            if (os.getenv('DEVELOPMENT') == 'False'): # Don't actually write in development
+                self.serial.write(data[1])
+            else:
+                pass
+
+            self.tx_queue.task_done()
+
+        except:
+            logging.exception('Serial write failure') # Probably get disconnected
+            self._alive = False

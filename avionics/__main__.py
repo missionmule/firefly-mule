@@ -47,6 +47,7 @@ def main():
     # Maintains list of active services (serial, data station, heartbeat)
     services = []
 
+    # System status flag set by data station handler, monitored by heartbeat
     is_downloading = threading.Event()
 
     # Serial handler with public rx and tx queues

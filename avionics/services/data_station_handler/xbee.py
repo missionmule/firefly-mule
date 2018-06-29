@@ -23,16 +23,18 @@ class XBee(object):
         self.xbee_port = None
         self.encode = None
         self.decode = None
-        self.data_station_idens = None
+        self.data_station_id = None
 
-        self.preamble_out = ['s', 't', 'r', 'e', 'e', 't']
-        self.preamble_in = ['c', 'a', 't']
+        self.preamble_out = 'street'
+        self.preamble_in = 'cat'
 
         while True:
             try:
-                if not "DEVELOPMENT" in os.environ: # Don't connect to XBee while in development
+                if os.getenv('DEVELOPMENT') == 'False' and os.getenv('TESTING') == 'False': # Don't connect to XBee while in development
                     self.xbee_port = serial.Serial(serial_port, 9600, timeout=5)
                     logging.info("Connected to XBee")
+                elif os.getenv('TESTING') == 'True': # Create a loopback to test locally
+                    self.xbee_port = serial.serial_for_url('loop://', timeout=5)
                 else:
                     logging.info("In development mode, not connecting to XBee")
                 break
@@ -60,17 +62,17 @@ class XBee(object):
             'demon_cat' : '02'
         }
 
-    def send_command(self, identity, command):
+    def send_command(self, data_station_id, command):
 
         # Immediately return False if in development (XBee not actually connected)
-        if "DEVELOPMENT" in os.environ:
+        if os.getenv('DEVELOPMENT') == 'True':
             return False
 
         logging.debug("XBee TX: %s" % self.preamble_out)
         self.xbee_port.write(self.preamble_out.encode('utf-8'))
 
-        logging.debug("XBee TX: %s" % self.data_station_idens[identity])
-        self.xbee_port.write(self.data_station_idens[identity].encode('utf-8'))
+        logging.debug("XBee TX: %s" % data_station_id)
+        self.xbee_port.write(data_station_id.encode('utf-8'))
 
         logging.debug("XBee TX: %s" % self.encode[command])
         self.xbee_port.write(self.encode[command].encode('utf-8'))

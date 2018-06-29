@@ -1,7 +1,9 @@
+import threading
+
 from .sftp import SFTPClient
 from .timer import Timer
 
-class Download(object):
+class Download(threading.Thread):
 
     """
     An instance of this class is created when the payload is notified that
@@ -9,45 +11,33 @@ class Download(object):
     and then exits when the download is complete.
     """
 
-    CONNECTION_TIMEOUT_SECONDS = 0
-    READ_WRITE_TIMEOUT_SECONDS = 0
+    def __init__(self, _data_station_id, _connection_timeout_millis):
 
-    __sftp = None
-    __data_station = None
+        super(Download, self).__init__()
 
-    is_connected = False
-
-    def __init__(self, _data_station, _connection_timeout=10, _read_write_timeout=10):
-
-        self.__data_station = _data_station # Reference to DataStation object monitored by Navigation
-        self.CONNECTION_TIMEOUT_SECONDS = _connection_timeout
-        self.READ_WRITE_TIMEOUT_SECONDS = 2
+        self.__data_station_id = _data_station_id # Reference to DataStation object monitored by Navigation
+        self.__connection_timeout_millis = _connection_timeout_millis
 
         # TODO: change this to dynamically distribute required certificate
-        self.__sftp = SFTPClient('pi', 'raspberry', str(self.__data_station.identity))
+        self.__sftp = SFTPClient('pi', 'raspberry', self.__data_station_id)
 
-    def connect(self):
+    def _connect(self):
         # Try to connect until SFTP client is connected or timeout event happens
         data_station_connection_timer = Timer()
         while not self.__sftp.is_connected:
 
-            if data_station_connection_timer.time_elapsed() > self.CONNECTION_TIMEOUT_SECONDS:
+            if data_station_connection_timer.time_elapsed() > self.__connection_timeout_millis / 1000:
                 logging.error("Connection to data station %s failed permanently" % (self.__data_station.identity))
                 break
 
             # Sets low level SSH socket read/write timeout for all operations (listdir, get, etc)
-            self.__sftp.connect(timeout=self.CONNECTION_TIMEOUT_SECONDS)
-
-            time.sleep(1)
-
-        # Whatever the status of SFTP connection after this while loop runs
-        self.is_connected = self.__sftp.is_connected
+            self.__sftp.connect(timeout=(self.__connection_timeout_millis / 1000))
 
         # Throw an error to tell navigation to continue on
-        if not self.is_connected:
+        if not self.__sftp.is_connected:
             raise Exception("Connection Timeout")
 
-    def start(self):
+    def _start(self):
         """
         For desired data station:
             1) Download field data and data station logs to drone
@@ -77,3 +67,8 @@ class Download(object):
 
         # Mark download as complete so Navigation service knows to continue mission
         self.__data_station.download_complete = True
+
+
+    def run(self):
+        self._connect()
+        self._start()
