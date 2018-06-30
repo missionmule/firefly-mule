@@ -28,20 +28,6 @@ class XBee(object):
         self.preamble_out = 'street'
         self.preamble_in = 'cat'
 
-        while True:
-            try:
-                if os.getenv('DEVELOPMENT') == 'False' and os.getenv('TESTING') == 'False': # Don't connect to XBee while in development
-                    self.xbee_port = serial.Serial(serial_port, 9600, timeout=5)
-                    logging.info("Connected to XBee")
-                elif os.getenv('TESTING') == 'True': # Create a loopback to test locally
-                    self.xbee_port = serial.serial_for_url('loop://', timeout=5)
-                else:
-                    logging.info("In development mode, not connecting to XBee")
-                break
-            except serial.SerialException:
-                logging.error("Failed to connect to xBee device. Retrying connection...")
-                time.sleep(3)
-
         # TODO: make single dictionary
         self.encode = {
             'POWER_ON' : '1',
@@ -55,6 +41,21 @@ class XBee(object):
         }
 
         self.data_station_idens = self.read_iden_map()
+
+    def connect(self):
+        while True:
+            try:
+                if os.getenv('DEVELOPMENT') == 'False' and os.getenv('TESTING') == 'False': # Don't connect to XBee while in development
+                    self.xbee_port = serial.Serial(serial_port, 9600, timeout=5)
+                    logging.info("Connected to XBee")
+                elif os.getenv('TESTING') == 'True': # Create a loopback to test locally
+                    self.xbee_port = serial.serial_for_url('loop://', timeout=5)
+                else:
+                    logging.info("In development mode, not connecting to XBee")
+                break
+            except serial.SerialException:
+                logging.error("Failed to connect to xBee device. Retrying connection...")
+                time.sleep(3)
 
     def read_iden_map(self):
         return {

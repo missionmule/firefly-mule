@@ -33,6 +33,9 @@ class DataStationHandler(object):
         self.xbee = XBee()
         self._alive = True
 
+    def connect(self):
+        self.xbee.connect()
+
     def run(self, rx_lock, is_downloading):
         """Loop forever and handle downloads as data stations are reached"""
 

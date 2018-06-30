@@ -63,7 +63,6 @@ def main():
 
     # Serial handler with public rx and tx queues
     ser = SerialHandler('/dev/ttyAMA0', 57600, 1)
-    ser.connect()
     services.append(ser)
 
     # Data station communication handling
@@ -73,6 +72,12 @@ def main():
     # Heartbeat pushed to serial tx_queue every 500ms
     hb = Heartbeat(ser.tx_queue, 500)
     services.append(hb)
+
+    # Gracefully handle SIGINT
+    signal.signal(signal.SIGINT, partial(signal_handler, services))
+
+    ser.connect()
+    dl.connect()
 
     thread_data_station_handler = threading.Thread(target=dl.run, args=(ser.rx_lock, is_downloading))
     thread_data_station_handler.daemon = True
@@ -93,9 +98,6 @@ def main():
     thread_serial_reader.daemon = True
     thread_serial_reader.name = 'Serial Communication Reader'
     thread_serial_reader.start()
-
-    # Gracefully handle SIGINT
-    signal.signal(signal.SIGINT, partial(signal_handler, services))
 
     # Wait for daemon threads to return
     thread_data_station_handler.join()

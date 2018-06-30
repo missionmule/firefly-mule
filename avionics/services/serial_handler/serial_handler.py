@@ -36,7 +36,6 @@ class SerialHandler(object):
         """Stop and close connection"""
         logging.info('Stopping serial handler...')
         self._alive = False
-        self.serial.close()
 
     def connect(self):
         """Connect to serial port"""
@@ -53,18 +52,13 @@ class SerialHandler(object):
                     self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
                     logging.info("Connected to serial")
 
-                # if ((os.getenv('DEVELOPMENT') == 'False' and os.getenv('TESTING') == 'False') or (os.getenv('DEVELOPMENT') == None and os.getenv('TESTING') == None)): # Real world
-                #     self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
-                #     logging.info("Connected to serial")
-                # elif os.getenv('TESTING') == 'True': # Create a loopback to test locally
-                #     self.serial = serial.serial_for_url('loop://', timeout=self.timeout)
-                #     logging.info("Testing: URL loopback initiated")
-                # else:
-                #     logging.info("Development: not connecting to serial")
                 break
             except serial.SerialException:
                 logging.error("Failed to connect to serial device. Retrying connection...")
                 time.sleep(3)
+
+        if (os.getenv('DEVELOPMENT') != 'True'): # Either in production or testing
+            self.close()
 
     def reader(self):
         """Loop forever and accept messages from autopilot into RX queue"""
