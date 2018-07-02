@@ -105,8 +105,7 @@ class SerialHandler(object):
             self.tx_lock.release()
             logging.debug('TX: %s', data[1])
 
-            pass # Don't actually write in development mode
-            if (os.getenv('DEVELOPMENT') != 'True') and (os.getenv):
+            if (os.getenv('DEVELOPMENT') != 'True'):
                 self.serial.write(data[1])
 
             self.tx_queue.task_done()
