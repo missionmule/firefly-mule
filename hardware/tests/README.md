@@ -10,7 +10,9 @@ This code is made to conduct system-level tests on the BirdsEyeView payload. Rig
 ## Test Setup
 
 1) Connect payload to 5V power, ensuring that at least 0.5A power supply.
-2) Connect the UART pins of the payload to the Arduino (Arduino RX is 10, Arduino TX is 11).
+2) Connect the UART pins of the payload to the Arduino 
+    * Arduino RX (Pin 10) ---> RPi TX
+    * Arduino TX (Pin 11) ---> RPi RX
 3) Connect the payload's GND line to the Arduino's GND line.
 4) Start the payloads software with `make run` in the firefly-mule directory.
 5) Upload the desired .ino code to the Arduino and monitor the serial terminal.
