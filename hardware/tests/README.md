@@ -9,7 +9,7 @@ This code is made to conduct system-level tests on the BirdsEyeView payload. Rig
 
 ## Test Setup
 
-1) Connect payload to 5V power, ensuring that at least 0.5A power supply.
+1) Connect payload to 5V power, ensuring that at least 2A power supply.
 2) Connect the UART pins of the payload to the Arduino 
     * Arduino RX (Pin 10) ---> RPi TX
     * Arduino TX (Pin 11) ---> RPi RX
