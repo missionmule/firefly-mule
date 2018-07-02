@@ -95,7 +95,13 @@ class DataStationHandler(object):
                 logging.error(e)
 
         else: # Simulate download
-            r = random.randint(1,3)
+
+            if (os.getenv('TESTING') == 'True') or (os.getenv('DEVELOPMENT') == 'True'): # Quick and dirty test
+                r = random.randint(1,3)
+            else: # Give a more realistic mock download for payload testing
+                # TODO: make real downloads work
+                r = random.randint(20,90)
+
             logging.debug('Simulating download for %i seconds', r)
             time.sleep(r) # "Download" for random time between 10 and 100 seconds
 

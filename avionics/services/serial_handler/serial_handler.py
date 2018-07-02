@@ -37,6 +37,9 @@ class SerialHandler(object):
         logging.info('Stopping serial handler...')
         self._alive = False
 
+        if (os.getenv('DEVELOPMENT') != 'True'): # Either in production or testing
+            self.serial.close()
+
     def connect(self):
         """Connect to serial port"""
         while True:
@@ -57,9 +60,6 @@ class SerialHandler(object):
                 logging.error("Failed to connect to serial device. Retrying connection...")
                 time.sleep(3)
 
-        # if (os.getenv('DEVELOPMENT') != 'True'): # Either in production or testing
-        #     self.close()
-
     def reader(self):
         """Loop forever and accept messages from autopilot into RX queue"""
 
@@ -72,7 +72,7 @@ class SerialHandler(object):
 
     def _read(self):
         try:
-            if os.getenv('DEVELOPMENT') == 'False':
+            if os.getenv('DEVELOPMENT') != 'True':
                 data = self.serial.readline()
             else:
                 data = None
@@ -83,7 +83,7 @@ class SerialHandler(object):
                 self.rx_queue.put(data.decode())
                 self.rx_lock.release()
         except:
-            logging.exception('Serial read failure') # Probably get disconnected
+            logging.error('Serial read failure') # Probably get disconnected
             self._alive = False
 
     def writer(self):
@@ -105,10 +105,9 @@ class SerialHandler(object):
             self.tx_lock.release()
             logging.debug('TX: %s', data[1])
 
-            if (os.getenv('DEVELOPMENT') == 'False'): # Don't actually write in development
+            pass # Don't actually write in development mode
+            if (os.getenv('DEVELOPMENT') != 'True') and (os.getenv):
                 self.serial.write(data[1])
-            else:
-                pass
 
             self.tx_queue.task_done()
 

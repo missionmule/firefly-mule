@@ -14,6 +14,7 @@ class TestDataStationHandler(unittest.TestCase):
 
         # One second connection timeout, read/write timeout, and 2 second overall timeout
         self._data_station_handler = DataStationHandler(1000, 1000, 2000, self._rx_queue)
+        self._data_station_handler.connect()
 
     def tearDown(self):
         self._data_station_handler.stop()

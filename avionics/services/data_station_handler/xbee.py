@@ -24,6 +24,7 @@ class XBee(object):
         self.encode = None
         self.decode = None
         self.data_station_id = None
+        self.serial_port = serial_port
 
         self.preamble_out = 'street'
         self.preamble_in = 'cat'
@@ -45,12 +46,12 @@ class XBee(object):
     def connect(self):
         while True:
             try:
-                if os.getenv('DEVELOPMENT') == 'False' and os.getenv('TESTING') == 'False': # Don't connect to XBee while in development
-                    self.xbee_port = serial.Serial(serial_port, 9600, timeout=5)
+                if (os.getenv('DEVELOPMENT') == 'False' and os.getenv('TESTING') == 'False') or (os.getenv('DEVELOPMENT') == None and os.getenv('TESTING') == None):
+                    self.xbee_port = serial.Serial(self.serial_port, 9600, timeout=5)
                     logging.info("Connected to XBee")
                 elif os.getenv('TESTING') == 'True': # Create a loopback to test locally
                     self.xbee_port = serial.serial_for_url('loop://', timeout=5)
-                else:
+                else: # Don't connect to XBee while in development
                     logging.info("In development mode, not connecting to XBee")
                 break
             except serial.SerialException:
