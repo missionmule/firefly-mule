@@ -1,5 +1,5 @@
 # Hardware System Tests
-This code is made to conduct system-level tests on the BirdsEyeView payload. Right Using an Arduino, the BirdsEyeView FireFly6 Pro is emulated in order to simulate a flight from the perspective of the Payload's Raspberry Pi.
+This code is made to conduct system-level tests on the BirdsEyeView payload. Using an Arduino, the BirdsEyeView FireFly6 Pro is emulated in order to simulate a flight from the perspective of the Payload's Raspberry Pi.
 
 ## Materials
 
@@ -9,8 +9,10 @@ This code is made to conduct system-level tests on the BirdsEyeView payload. Rig
 
 ## Test Setup
 
-1) Connect payload to 5V power, ensuring that at least 0.5A power supply.
-2) Connect the UART pins of the payload to the Arduino (Arduino RX is 10, Arduino TX is 11).
+1) Connect payload to 5V power, ensuring at least 2A current supply.
+2) Connect the UART pins of the payload to the Arduino 
+    * Arduino RX (Pin 10) ---> RPi TX
+    * Arduino TX (Pin 11) ---> RPi RX
 3) Connect the payload's GND line to the Arduino's GND line.
 4) Start the payloads software with `make run` in the firefly-mule directory.
 5) Upload the desired .ino code to the Arduino and monitor the serial terminal.
