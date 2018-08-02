@@ -99,7 +99,7 @@ def main():
     thread_serial_reader.name = 'Serial Communication Reader'
     thread_serial_reader.start()
 
-    # Wait for daemon threads to return
+    # Wait for daemon threads to return on their own
     thread_data_station_handler.join()
     thread_heartbeat.join()
     thread_serial_writer.join()

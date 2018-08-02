@@ -22,7 +22,7 @@ To set up and run the application, execute:
 
 ```
 make init
-make run
+make run-dev OR make run-prod
 ```
 
 ## Testing
