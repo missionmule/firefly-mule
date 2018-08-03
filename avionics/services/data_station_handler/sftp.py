@@ -55,7 +55,6 @@ class SFTPClient(object):
             self.__hostkeytype = host_keys[self.__hostname].keys()[0]
             self.__hostkey = host_keys[self.__hostname][self.__hostkeytype]
 
-
     def connect(self, timeout=60):
         # now, connect and use paramiko Transport to negotiate SSH2 across the connection
         logging.info("Connecting to data station... [hostname: %s]" % (self.__hostname))
@@ -176,18 +175,16 @@ class SFTPClient(object):
     # Field data methods
     # -----------------------
 
+    # TODO: ensure this handles files with same name in different directories
     def downloadAllFieldData(self):
         """
         Download all data station field data
+        Recurses from /media/ dir to download all data
         """
-        file_list = self.getRemoteFileList(self.REMOTE_FIELD_DATA_SOURCE)
-        if not file_list:
-            logging.info("No field data files to download")
-        else:
-            logging.info("Downloading %i field data files..." % (len(file_list)))
-            # Download all files
-            for file_name in file_list:
-                self.downloadFile(self.REMOTE_FIELD_DATA_SOURCE, self.LOCAL_FIELD_DATA_DESTINATION, file_name)
+        for dirpath, dirs, files in os.walk(self.REMOTE_FIELD_DATA_SOURCE):
+            logging.info("Downloading %i field data files..." % (len(files)))
+            for file_name in files:
+                self.downloadFile(dirpath, self.LOCAL_FIELD_DATA_DESTINATION, file_name)
 
     def deleteAllFieldData(self):
         """
@@ -196,11 +193,7 @@ class SFTPClient(object):
         # TODO: only delete files that 100% downloaded.
         # If connection times out, some file names may exist, but the files are empty.
 
-        logging.debug("Beginning data station log removal")
-        for file_name in os.listdir(self.LOCAL_FIELD_DATA_DESTINATION):
-            self.deleteFile(self.REMOTE_FIELD_DATA_SOURCE, file_name)
-        logging.info("Field data removal complete")
-
+        pass
 
     # -----------------------
     # Log data methods
@@ -210,20 +203,22 @@ class SFTPClient(object):
         """
         Download all data station log data
         """
-        file_list = self.getRemoteFileList(self.REMOTE_LOG_SOURCE)
-        if not file_list:
-            logging.info("No log files to download")
-        else:
-            logging.info("Downloading %i log files..." % (len(file_list)))
-            # Download all files
-            for file_name in file_list:
-                self.downloadFile(self.REMOTE_LOG_SOURCE, self.LOCAL_LOG_DESTINATION, file_name)
+        pass
+        # file_list = self.getRemoteFileList(self.REMOTE_LOG_SOURCE)
+        # if not file_list:
+        #     logging.info("No log files to download")
+        # else:
+        #     logging.info("Downloading %i log files..." % (len(file_list)))
+        #     # Download all files
+        #     for file_name in file_list:
+        #         self.downloadFile(self.REMOTE_LOG_SOURCE, self.LOCAL_LOG_DESTINATION, file_name)
 
     def deleteAllLogData(self):
         """
         Remove successfully downloaded log files
         """
-        logging.debug("Beginning data station log removal")
-        for file_name in os.listdir(self.LOCAL_LOG_DESTINATION): # List newly downloaded files
-            self.deleteFile(self.REMOTE_LOG_SOURCE, file_name)
-        logging.info("Field data removal complete")
+        pass
+        # logging.debug("Beginning data station log removal")
+        # for file_name in os.listdir(self.LOCAL_LOG_DESTINATION): # List newly downloaded files
+        #     self.deleteFile(self.REMOTE_LOG_SOURCE, file_name)
+        # logging.info("Field data removal complete")
