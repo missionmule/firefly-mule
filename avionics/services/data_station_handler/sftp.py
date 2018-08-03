@@ -11,8 +11,8 @@ import os
 
 class SFTPClient(object):
 
-    REMOTE_ROOT_DATA_DIRECTORY = '/media/usb/DCIM/100EK113/'
-    LOCAL_ROOT_DATA_DIRECTORY = '/Volumes/MissionMule/'
+    REMOTE_ROOT_DATA_DIRECTORY = '/media/'
+    LOCAL_ROOT_DATA_DIRECTORY = '/srv/flight-data/'
 
     REMOTE_FIELD_DATA_SOURCE = REMOTE_ROOT_DATA_DIRECTORY + ''               # Location relative to SFTP root directory where the field data files are located; current SFTP root from pi@cameratrap.local /home/pi/
     LOCAL_FIELD_DATA_DESTINATION = LOCAL_ROOT_DATA_DIRECTORY + 'field/'      # Where downloaded data station field data will be kept

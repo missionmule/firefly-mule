@@ -73,9 +73,14 @@ class DataStationHandler(object):
             while not self.xbee.acknowledge(data_station_id, 'POWER_ON'):
                 self.xbee.send_command(data_station_id, 'POWER_ON')
 
-        # This is the real world (ahhh!)
-        if os.getenv('DEVELOPMENT') == 'False' and os.getenv('TESTING') == 'False':
+        # Don't actually download
+        if os.getenv('TESTING' == 'True'):
+            r = random.randint(10,20)
 
+            logging.debug('Simulating download for %i seconds', r)
+            time.sleep(r) # "Download" for random time between 10 and 100 seconds
+
+        else: # This is the real world (ahhh!)
             download_worker = Download(data_station_id,
                                        self.connection_timeout_millis)
 
@@ -95,16 +100,6 @@ class DataStationHandler(object):
             except Exception as e:
                 logging.error(e)
 
-        else: # Simulate download
-
-            if (os.getenv('TESTING') == 'True') or (os.getenv('DEVELOPMENT') == 'True'): # Quick and dirty test
-                r = random.randint(1,3)
-            else: # Give a more realistic mock download for payload testing
-                # TODO: make real downloads work
-                r = random.randint(20,90)
-
-            logging.debug('Simulating download for %i seconds', r)
-            time.sleep(r) # "Download" for random time between 10 and 100 seconds
 
         # Mark task as complete, even if it fails
         self.rx_queue.task_done()
