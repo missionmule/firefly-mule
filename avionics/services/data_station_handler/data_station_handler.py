@@ -69,12 +69,12 @@ class DataStationHandler(object):
         self.xbee.send_command(data_station_id, 'POWER_ON')
 
         # TODO: ensure this does not block if data station does not respond
-        if os.getenv('TESTING') == 'False':
+        if (os.getenv('TESTING') == 'False'):
             while not self.xbee.acknowledge(data_station_id, 'POWER_ON'):
                 self.xbee.send_command(data_station_id, 'POWER_ON')
 
         # Don't actually download
-        if os.getenv('TESTING' == 'True'):
+        if (os.getenv('TESTING') == 'True'):
             r = random.randint(10,20)
 
             logging.debug('Simulating download for %i seconds', r)

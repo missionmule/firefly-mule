@@ -23,7 +23,7 @@ def setup_logging():
     if os.getenv("DEVELOPMENT") == 'True' or os.getenv("TESTING") == 'True':
         logging_level = logging.DEBUG
     else:
-        logging_level = logging.INFO
+        logging_level = logging.DEBUG
 
     logging.basicConfig(filename='flight.log',
                         level=logging_level,
