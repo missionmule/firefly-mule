@@ -1,3 +1,4 @@
+from stat import S_ISDIR
 import socket
 import traceback
 import logging
@@ -11,7 +12,7 @@ import os
 
 class SFTPClient(object):
 
-    REMOTE_ROOT_DATA_DIRECTORY = '/media/'
+    REMOTE_ROOT_DATA_DIRECTORY = '/media/usb/'
     LOCAL_ROOT_DATA_DIRECTORY = '/srv/flight-data/'
 
     REMOTE_FIELD_DATA_SOURCE = REMOTE_ROOT_DATA_DIRECTORY + ''               # Location relative to SFTP root directory where the field data files are located; current SFTP root from pi@cameratrap.local /home/pi/
@@ -50,15 +51,18 @@ class SFTPClient(object):
         self.__hostname = _hostname
 
         host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+        logging.getLogger("paramiko").setLevel(logging.DEBUG)
 
         if self.__hostname in host_keys:
             self.__hostkeytype = host_keys[self.__hostname].keys()[0]
             self.__hostkey = host_keys[self.__hostname][self.__hostkeytype]
 
+        print ("hostkeytype: "+self.__hostkeytype)
+#        print ("hostkey: "+self.__hostkey)
     def connect(self, timeout=60):
         # now, connect and use paramiko Transport to negotiate SSH2 across the connection
         logging.info("Connecting to data station... [hostname: %s]" % (self.__hostname))
-
+        print("connecting...")
         # Timeout is handled by Navigation.
         try:
             self.__transport = paramiko.Transport((self.__hostname, self.PORT),
@@ -66,7 +70,7 @@ class SFTPClient(object):
 
             # Compress files on data station before sending over Wi-Fi to drone
             self.__transport.use_compression()
-
+            print("before connection")
             self.__transport.connect(self.__host_key, self.__username, self.__password,
                                      gss_host=socket.getfqdn(self.__hostname),
                                      gss_auth = self.USE_GSS_API,
@@ -74,8 +78,8 @@ class SFTPClient(object):
 
             self.__sftp = paramiko.SFTPClient.from_transport(self.__transport)
 
-            self.__sftp.get_channel().settimeout(timeout) # Timeout in seconds on read/write operations on underlying SSH channel
-
+            #self.__sftp.get_channel().settimeout(timeout) # Timeout in seconds on read/write operations on underlying SSH channel
+            print("con. established")
             logging.info("Connection established to data station: %s" % (self.__hostname))
 
             # Ensure remote root data directory exists
@@ -146,7 +150,7 @@ class SFTPClient(object):
         """
         logging.info("Downloading file: %s" % (file_name))
         try:
-            self.__sftp.get(remote_path+file_name, local_destination+file_name)
+            self.__sftp.get(os.path.join(remote_path,file_name), os.path.join(local_destination,file_name))
         except IOError as e:
             logging.error(e)
         except socket.timeout:
@@ -175,16 +179,34 @@ class SFTPClient(object):
     # Field data methods
     # -----------------------
 
+    def _walk(self, remote_path):
+        path=remote_path
+        files=[]
+        folders=[]
+
+        for f in self.__sftp.listdir_attr(remote_path):
+            if S_ISDIR(f.st_mode):
+                folders.append(f.filename)
+            else:
+                files.append(f.filename)
+
+        if files:
+            yield path, files
+
+        for folder in folders:
+            new_path = os.path.join(remote_path, folder)
+            for x in self._walk(new_path):
+                yield x
+
     # TODO: ensure this handles files with same name in different directories
     def downloadAllFieldData(self):
         """
         Download all data station field data
         Recurses from /media/ dir to download all data
         """
-        for dirpath, dirs, files in os.walk(self.REMOTE_FIELD_DATA_SOURCE):
-            logging.info("Downloading %i field data files..." % (len(files)))
-            for file_name in files:
-                self.downloadFile(dirpath, self.LOCAL_FIELD_DATA_DESTINATION, file_name)
+        for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
+            for file in files:
+                self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
 
     def deleteAllFieldData(self):
         """

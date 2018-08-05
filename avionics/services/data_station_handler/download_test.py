@@ -1,6 +1,7 @@
+import logging
 
-from .sftp import SFTPClient
-from .timer import Timer
+from sftp import SFTPClient
+from timer import Timer
 
 class Download():
 
@@ -12,7 +13,7 @@ class Download():
 
     def __init__(self, _data_station_id, _connection_timeout_millis=1000):
 
-        super(Download, self).__init__()
+        #super(Download, self).__init__()
 
         self.__data_station_id = _data_station_id # Reference to DataStation object monitored by Navigation
         self.__connection_timeout_millis = _connection_timeout_millis
@@ -21,20 +22,25 @@ class Download():
         self.__sftp = SFTPClient('pi', 'raspberry', self.__data_station_id)
 
     def _connect(self):
+        print("In connect")
         # Try to connect until SFTP client is connected or timeout event happens
         data_station_connection_timer = Timer()
         while not self.__sftp.is_connected:
 
-            if data_station_connection_timer.time_elapsed() > self.__connection_timeout_millis / 1000:
-                logging.error("Connection to data station %s failed permanently" % (self.__data_station.identity))
+            if data_station_connection_timer.time_elapsed() > 10000:
+                logging.error("Connection to data station %s failed permanently" % (self.__data_station_id))
+                print("permanent failure")
                 break
 
             # Sets low level SSH socket read/write timeout for all operations (listdir, get, etc)
-            self.__sftp.connect(timeout=(self.__connection_timeout_millis / 1000))
+            self.__sftp.connect(timeout=(1000))
 
+        print("After connection")
+        #self.__sftp.downloadAllFieldData()
         # Throw an error to tell navigation to continue on
         if not self.__sftp.is_connected:
             raise Exception("Connection Timeout")
+
 
     def _start(self):
         """
@@ -43,12 +49,12 @@ class Download():
             2) Delete successfully transferred field data and logs from data station
         """
 
-        logging.debug("Beginning download...")
-        self.__data_station.download_started = True
+        print("Beginning download...")
+        #self.__data_station.download_started = True
 
         # Prioritizes field data transfer over log data
         self.__sftp.downloadAllFieldData()
-        self.__sftp.downloadAllLogData()
+        #self.__sftp.downloadAllLogData()
 
         logging.info("Download complete")
 
@@ -65,9 +71,18 @@ class Download():
         self.__sftp.close()
 
         # Mark download as complete so Navigation service knows to continue mission
-        self.__data_station.download_complete = True
+        #self.__data_station.download_complete = True
 
 
     def run(self):
         self._connect()
         self._start()
+
+
+if __name__ == "__main__":
+    d = Download("redwood.local", 60000)
+    print("After init")
+    d._connect()
+    print("After connection")
+    d._start()
+    print("After start")
