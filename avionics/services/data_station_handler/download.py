@@ -32,7 +32,7 @@ class Download(threading.Thread):
                 break
 
             # Sets low level SSH socket read/write timeout for all operations (listdir, get, etc)
-            self.__sftp.connect(timeout=(1000))
+            self.__sftp.connect()
 
         #self.__sftp.downloadAllFieldData()
         # Throw an error to tell navigation to continue on

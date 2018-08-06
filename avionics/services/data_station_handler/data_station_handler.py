@@ -81,8 +81,6 @@ class DataStationHandler(object):
                     logging.error("POWER_ON command ACK failure. Moving on...")
                     break
 
-        logging.info('XBee ACK received, beginning download...')
-
         # Don't actually download
         if (os.getenv('TESTING') == 'True'):
             r = random.randint(10,20)
@@ -93,6 +91,9 @@ class DataStationHandler(object):
         # Only try download if wakeup was successful
         elif (wakeup_successful): # This is the real world (ahhh!)
             # '.local' ensures visibility on the network
+
+            logging.info('XBee ACK received, beginning download...')
+
             download_worker = Download(data_station_id.strip()+'.local',
                                        self.connection_timeout_millis)
 
