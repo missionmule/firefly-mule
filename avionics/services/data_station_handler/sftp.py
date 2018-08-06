@@ -42,9 +42,9 @@ class SFTPClient(object):
     def __init__(self, _username, _password, _hostname):
 
         # Update destination directories to include hostname for data differentiation
-        _hostname, _suffix = __hostname.split('.')
-        self.LOCAL_FIELD_DATA_DESTINATION = '%s/%s/' % (self.LOCAL_FIELD_DATA_DESTINATION, _hostname)
-        self.LOCAL_LOG_DESTINATION = '%s/%s/' % (self.LOCAL_LOG_DESTINATION, _hostname)
+        self.__hostname = _hostname
+        self.LOCAL_FIELD_DATA_DESTINATION = '%s/%s/' % (self.LOCAL_FIELD_DATA_DESTINATION, __hostname)
+        self.LOCAL_LOG_DESTINATION = '%s/%s/' % (self.LOCAL_LOG_DESTINATION, __hostname)
 
         # TODO: change from password to public key cryptography
         # Login credentials
@@ -71,7 +71,6 @@ class SFTPClient(object):
 
             # Compress files on data station before sending over Wi-Fi to drone
             self.__transport.use_compression()
-            print("before connection")
             self.__transport.connect(self.__host_key, self.__username, self.__password,
                                      gss_host=socket.getfqdn(self.__hostname),
                                      gss_auth = self.USE_GSS_API,
