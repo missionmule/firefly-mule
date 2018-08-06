@@ -26,8 +26,6 @@ class XBee(object):
         self.data_station_id = None
         self.serial_port = serial_port
 
-        self.hash = hashlib.md5()
-
         self.preamble_out = 'street'
         self.preamble_in = 'cat'
 
@@ -65,9 +63,11 @@ class XBee(object):
             return False
 
         # Update hash with new data_station_id
-        self.hash.update(data_station_id.encode('utf-8'))
+        hash = hashlib.md5()
+        hash.update(data_station_id.encode('utf-8'))
+
         # Get MD5 hash to 3 hex characters
-        identity_code = self.hash.hexdigest()[0:3]
+        identity_code = hash.hexdigest()[0:3]
 
         logging.debug("XBee TX: %s" % self.preamble_out)
         self.xbee_port.write(self.preamble_out.encode('utf-8'))
@@ -75,7 +75,7 @@ class XBee(object):
         logging.debug("XBee TX: %s" % identity_code)
         self.xbee_port.write(identity_code.encode('utf-8'))
 
-        logging.debug("XBee TX: %s" % self.encode[command])
+        logging.debug("XBee TX: %s" % command)
         self.xbee_port.write(self.encode[command].encode('utf-8'))
 
     def acknowledge(self, data_station_id, command):
@@ -90,10 +90,11 @@ class XBee(object):
         preamble_index = 0
 
         # Update hash with new data_station_id
-        self.hash.update(data_station_id.encode('utf-8'))
+        hash = hashlib.md5()
+        hash.update(data_station_id.encode('utf-8'))
 
         # Get MD5 hash to 3 hex characters
-        identity_code = self.hash.hexdigest()[0:3]
+        identity_code = hash.hexdigest()[0:3]
 
         command_code = self.encode[command]
 
