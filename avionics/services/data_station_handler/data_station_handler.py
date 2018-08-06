@@ -19,7 +19,7 @@ class DataStationHandler(object):
 
     XBee Wakeup:
         When the UAV arrives at a data station, the station is woken up with
-        an XBee RF signal codifying its data station UUID.
+        an XBee RF signal including its data station ID ('redwood', 'streetcat', etc.)
 
     """
 
@@ -82,7 +82,7 @@ class DataStationHandler(object):
 
         else: # This is the real world (ahhh!)
             # '.local' ensures visibility on the network
-            download_worker = Download(data_station_id+'.local',
+            download_worker = Download(data_station_id.strip()+'.local',
                                        self.connection_timeout_millis)
 
             try:
