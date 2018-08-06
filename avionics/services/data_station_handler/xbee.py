@@ -114,7 +114,7 @@ class XBee(object):
                     preamble_success = False
                     preamble_index = 0
 
-                iden_match = (identity_index == 2)
+                iden_match = (identity_index == 3)
 
             # First pass: Check for preamble match
             elif (incoming_byte == self.preamble_in[preamble_index]):
