@@ -2,7 +2,7 @@ import serial
 import time
 import logging
 import os
-
+import hashlib
 
 class XBee(object):
 
@@ -26,6 +26,8 @@ class XBee(object):
         self.data_station_id = None
         self.serial_port = serial_port
 
+        self.hash = hashlib.md5()
+
         self.preamble_out = 'street'
         self.preamble_in = 'cat'
 
@@ -40,8 +42,6 @@ class XBee(object):
             '2' : 'POWER_OFF',
             '3' : 'EXTEND_TIME'
         }
-
-        self.data_station_idens = self.read_iden_map()
 
     def connect(self):
         while True:
@@ -58,28 +58,27 @@ class XBee(object):
                 logging.error("Failed to connect to xBee device. Retrying connection...")
                 time.sleep(3)
 
-    def read_iden_map(self):
-        return {
-            'street_cat' : '01',
-            'demon_cat' : '02'
-        }
-
     def send_command(self, data_station_id, command):
 
         # Immediately return False if in development (XBee not actually connected)
         if os.getenv('DEVELOPMENT') == 'True':
             return False
 
+        # Update hash with new data_station_id
+        self.hash.update(data_station_id.encode('utf-8'))
+        # Get MD5 hash to 3 hex characters
+        identity_code = self.hash.hexdigest()[0:3]
+
         logging.debug("XBee TX: %s" % self.preamble_out)
         self.xbee_port.write(self.preamble_out.encode('utf-8'))
 
-        logging.debug("XBee TX: %s" % data_station_id)
-        self.xbee_port.write(data_station_id.encode('utf-8'))
+        logging.debug("XBee TX: %s" % identity_code)
+        self.xbee_port.write(identity_code.encode('utf-8'))
 
         logging.debug("XBee TX: %s" % self.encode[command])
         self.xbee_port.write(self.encode[command].encode('utf-8'))
 
-    def acknowledge(self, identity, command):
+    def acknowledge(self, data_station_id, command):
         """
         Called after command is sent
         """
@@ -90,7 +89,12 @@ class XBee(object):
         preamble_success = False
         preamble_index = 0
 
-        identity_code = self.data_station_idens[identity]
+        # Update hash with new data_station_id
+        self.hash.update(data_station_id.encode('utf-8'))
+
+        # Get MD5 hash to 3 hex characters
+        identity_code = self.hash.hexdigest()[0:3]
+
         command_code = self.encode[command]
 
         while (self.xbee_port.in_waiting > 0): # There's something in the XBee buffer
