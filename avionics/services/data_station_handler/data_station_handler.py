@@ -4,6 +4,7 @@ import random
 import time
 import threading
 
+from .timer import Timer
 from .download import Download
 from .xbee import XBee
 
@@ -43,7 +44,7 @@ class DataStationHandler(object):
 
             if not self.rx_queue.empty():    # You've got mail!
 
-                self._wake_and_download(rx_lock, is_downloading)
+                self._wake_download_and_sleep(rx_lock, is_downloading)
 
             else:
                 time.sleep(1)   # Check RX queue again in 1 second
@@ -105,6 +106,22 @@ class DataStationHandler(object):
 
             except Exception as e:
                 logging.error(e)
+
+        # Wake up data station
+        logging.info('Shutting down data station %s...', data_station_id)
+        self.xbee.send_command(data_station_id, 'POWER_OFF')
+
+        xbee_sleep_command_timer = Timer()
+        if not (os.getenv('TESTING') == 'True'):
+            while not self.xbee.acknowledge(data_station_id, 'POWER_OFF'):
+                logging.debug("POWER_OFF data station %s", data_station_id)
+                self.xbee.send_command(data_station_id, 'POWER_OFF')
+                time.sleep(0.5) # Try again in 0.5s
+
+                # Will try shutting down data station over XBee for 10 seconds before moving on
+                if xbee_sleep_command_timer.time_elapsed() > 10000:
+                    logging.error("Shutdown command ACK failure. Moving on...")
+                    break
 
 
         # Mark task as complete, even if it fails

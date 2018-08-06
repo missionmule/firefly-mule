@@ -104,13 +104,12 @@ class XBee(object):
 
             # Third pass: Read command
             if (iden_match == True):
-                logging.debug("Returning command")
-                logging.debug("ACK success: %s", str(incoming_byte == command_code))
+                logging.debug("XBee ACK success: %s", str(incoming_byte == command_code))
                 return (incoming_byte == command_code)
 
             # Second pass: Check for identity match
             elif (preamble_success == True):
-                logging.debug("In preamble success")
+                logging.debug("XBee checking ID")
                 if (incoming_byte == identity_code[identity_index]):
                     identity_index += 1
                 else:
@@ -121,13 +120,12 @@ class XBee(object):
 
             # First pass: Check for preamble match
             elif (incoming_byte == self.preamble_in[preamble_index]):
-                logging.debug("In first pass")
+                logging.debug("XBee checking preamble")
                 preamble_index+=1
                 preamble_success = (preamble_index == 3)
 
             # Reset
             else:
-                logging.debug("Resetting...")
                 iden_match = False
                 preamble_success = False
                 preamble_index = 0
