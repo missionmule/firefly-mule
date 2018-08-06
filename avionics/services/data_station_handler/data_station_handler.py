@@ -69,7 +69,7 @@ class DataStationHandler(object):
         self.xbee.send_command(data_station_id, 'POWER_ON')
 
         # TODO: ensure this does not block if data station does not respond
-        if (os.getenv('TESTING') == 'False'):
+        if not (os.getenv('TESTING') == 'True'):
             while not self.xbee.acknowledge(data_station_id, 'POWER_ON'):
                 self.xbee.send_command(data_station_id, 'POWER_ON')
 
