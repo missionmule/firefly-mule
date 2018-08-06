@@ -1,7 +1,7 @@
 import logging
 
-from sftp import SFTPClient
-from timer import Timer
+from .sftp import SFTPClient
+from .timer import Timer
 
 class Download():
 
