@@ -49,7 +49,7 @@ class SFTPClient(object):
         self.__password = _password
         self.__hostname = _hostname
 
-        host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+        host_keys = paramiko.util.load_host_keys(os.path.expanduser('/home/pi/.ssh/known_hosts'))
 
         if self.__hostname in host_keys:
             self.__hostkeytype = host_keys[self.__hostname].keys()[0]

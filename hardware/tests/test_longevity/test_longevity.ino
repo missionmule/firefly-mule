@@ -16,7 +16,7 @@ int testRound = 0;
 char heartbeatOne = 100;
 bool heartbeatReceived = true;
 
-String dataStationID[6] = {"demoncat", "streetcat", "falcon", "pussycat", "tom", "stalin"};
+String dataStationID[6] = {"redwood", "redwood"};
 
 void setup() {
   

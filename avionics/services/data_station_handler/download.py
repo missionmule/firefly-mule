@@ -27,7 +27,7 @@ class Download(threading.Thread):
         while not self.__sftp.is_connected:
 
             if data_station_connection_timer.time_elapsed() > self.__connection_timeout_millis / 1000:
-                logging.error("Connection to data station %s failed permanently" % (self.__data_station.identity))
+                logging.error("Connection to data station %s failed permanently" % (self.__data_station_id))
                 break
 
             # Sets low level SSH socket read/write timeout for all operations (listdir, get, etc)
@@ -45,7 +45,6 @@ class Download(threading.Thread):
         """
 
         logging.debug("Beginning download...")
-        self.__data_station.download_started = True
 
         # Prioritizes field data transfer over log data
         self.__sftp.downloadAllFieldData()
@@ -60,13 +59,11 @@ class Download(threading.Thread):
         # self.__sftp.deleteAllFieldData()
         # self.__sftp.deleteAllLogData()
 
-        logging.info("Removal of successfully transferred files complete")
+        #logging.info("Removal of successfully transferred files complete")
 
         # Close connection to data station
+        logging.debug("Closing SFTP connection...")
         self.__sftp.close()
-
-        # Mark download as complete so Navigation service knows to continue mission
-        self.__data_station.download_complete = True
 
 
     def run(self):
