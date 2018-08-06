@@ -64,19 +64,19 @@ class XBee(object):
 
         # Update hash with new data_station_id
         hash = hashlib.md5()
-        hash.update(data_station_id.encode('utf-8'))
+        hash.update(data_station_id)
 
         # Get MD5 hash to 3 hex characters
         identity_code = hash.hexdigest()[0:3]
 
         logging.debug("XBee TX: %s" % self.preamble_out)
-        self.xbee_port.write(self.preamble_out.encode('utf-8'))
+        self.xbee_port.write(self.preamble_out)
 
         logging.debug("XBee TX: %s" % identity_code)
-        self.xbee_port.write(identity_code.encode('utf-8'))
+        self.xbee_port.write(identity_code)
 
-        logging.debug("XBee TX: %s" % command)
-        self.xbee_port.write(self.encode[command].encode('utf-8'))
+        logging.debug("XBee TX: %s" % self.encode[command])
+        self.xbee_port.write(self.encode[command])
 
     def acknowledge(self, data_station_id, command):
         """
@@ -91,7 +91,7 @@ class XBee(object):
 
         # Update hash with new data_station_id
         hash = hashlib.md5()
-        hash.update(data_station_id.encode('utf-8'))
+        hash.update(data_station_id)
 
         # Get MD5 hash to 3 hex characters
         identity_code = hash.hexdigest()[0:3]
@@ -99,8 +99,8 @@ class XBee(object):
         command_code = self.encode[command]
 
         while (self.xbee_port.in_waiting > 0): # There's something in the XBee buffer
-            incoming_byte = self.xbee_port.read().decode('utf-8') # Read a byte at a time
-            logging.debug("XBee TX: %s" % incoming_byte)
+            incoming_byte = self.xbee_port.read() # Read a byte at a time
+            logging.debug("XBee RX: %s" % incoming_byte)
 
             # Third pass: Read command
             if (iden_match == True):

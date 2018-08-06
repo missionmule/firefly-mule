@@ -72,7 +72,7 @@ class DataStationHandler(object):
         # TODO: ensure this does not block if data station does not respond
         if not (os.getenv('TESTING') == 'True'):
             while not self.xbee.acknowledge(data_station_id, 'POWER_ON'):
-                logging.debug("Waking up data station %s", data_station_id)
+                logging.debug("POWER_ON data station %s", data_station_id)
                 self.xbee.send_command(data_station_id, 'POWER_ON')
                 time.sleep(0.5) # Try again in 0.5s
 
