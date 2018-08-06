@@ -27,7 +27,7 @@ class Download(threading.Thread):
         data_station_connection_timer = Timer()
         while not self.__sftp.is_connected:
 
-            if data_station_connection_timer.time_elapsed() > self._connection_timeout_millis/1000:
+            if data_station_connection_timer.time_elapsed() > self.__connection_timeout_millis/1000:
                 logging.error("Connection to data station %s failed permanently" % (self.__data_station_id))
                 break
 
