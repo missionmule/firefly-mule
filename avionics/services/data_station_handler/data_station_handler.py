@@ -60,12 +60,13 @@ class DataStationHandler(object):
 
         # Get data station ID as message from rx_queue
         rx_lock.acquire()
-        data_station_id = self.rx_queue.get()
+        data_station_id = self.rx_queue.get().strip() # Removes invisible characters
         rx_lock.release()
 
         logging.info('Data station arrival: %s', data_station_id)
 
         # Wake up data station
+        logging.info('Waking up over XBee...')
         self.xbee.send_command(data_station_id, 'POWER_ON')
 
         # TODO: ensure this does not block if data station does not respond
@@ -73,6 +74,9 @@ class DataStationHandler(object):
             while not self.xbee.acknowledge(data_station_id, 'POWER_ON'):
                 logging.debug("Waking up data station %s", data_station_id)
                 self.xbee.send_command(data_station_id, 'POWER_ON')
+                time.sleep(0.5) # Try again in 0.5s
+
+        logging.info('XBee ACK received, beginning download...')
 
         # Don't actually download
         if (os.getenv('TESTING') == 'True'):
