@@ -55,7 +55,7 @@ class DataStationHandler(object):
         logging.info("Stopping data station handler...")
         self._alive = False
 
-    def _wake_and_download(self, rx_lock, is_downloading):
+    def _wake_and_download_and_sleep(self, rx_lock, is_downloading):
         # Update system status (used by heartbeat)
         is_downloading.set()
 
