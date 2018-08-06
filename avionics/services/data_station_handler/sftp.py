@@ -43,8 +43,8 @@ class SFTPClient(object):
 
         # Update destination directories to include hostname for data differentiation
         self.__hostname = _hostname
-        self.LOCAL_FIELD_DATA_DESTINATION = '%s/%s/' % (self.LOCAL_FIELD_DATA_DESTINATION, __hostname)
-        self.LOCAL_LOG_DESTINATION = '%s/%s/' % (self.LOCAL_LOG_DESTINATION, __hostname)
+        self.LOCAL_FIELD_DATA_DESTINATION = '%s/%s/' % (self.LOCAL_FIELD_DATA_DESTINATION, self.__hostname)
+        self.LOCAL_LOG_DESTINATION = '%s/%s/' % (self.LOCAL_LOG_DESTINATION, self.__hostname)
 
         # TODO: change from password to public key cryptography
         # Login credentials
