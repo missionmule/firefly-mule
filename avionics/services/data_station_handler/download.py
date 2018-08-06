@@ -1,9 +1,9 @@
-import threading
+import logging
 
-from .sftp import SFTPClient
-from .timer import Timer
+from sftp import SFTPClient
+from timer import Timer
 
-class Download(threading.Thread):
+class Download():
 
     """
     An instance of this class is created when the payload is notified that
@@ -11,9 +11,9 @@ class Download(threading.Thread):
     and then exits when the download is complete.
     """
 
-    def __init__(self, _data_station_id, _connection_timeout_millis):
+    def __init__(self, _data_station_id, _connection_timeout_millis=1000):
 
-        super(Download, self).__init__()
+        #super(Download, self).__init__()
 
         self.__data_station_id = _data_station_id # Reference to DataStation object monitored by Navigation
         self.__connection_timeout_millis = _connection_timeout_millis
@@ -22,20 +22,25 @@ class Download(threading.Thread):
         self.__sftp = SFTPClient('pi', 'raspberry', self.__data_station_id)
 
     def _connect(self):
+        print("In connect")
         # Try to connect until SFTP client is connected or timeout event happens
         data_station_connection_timer = Timer()
         while not self.__sftp.is_connected:
 
-            if data_station_connection_timer.time_elapsed() > self.__connection_timeout_millis / 1000:
-                logging.error("Connection to data station %s failed permanently" % (self.__data_station.identity))
+            if data_station_connection_timer.time_elapsed() > 10000:
+                logging.error("Connection to data station %s failed permanently" % (self.__data_station_id))
+                print("permanent failure")
                 break
 
             # Sets low level SSH socket read/write timeout for all operations (listdir, get, etc)
-            self.__sftp.connect(timeout=(self.__connection_timeout_millis / 1000))
+            self.__sftp.connect(timeout=(1000))
 
+        print("After connection")
+        #self.__sftp.downloadAllFieldData()
         # Throw an error to tell navigation to continue on
         if not self.__sftp.is_connected:
             raise Exception("Connection Timeout")
+
 
     def _start(self):
         """
@@ -44,12 +49,12 @@ class Download(threading.Thread):
             2) Delete successfully transferred field data and logs from data station
         """
 
-        logging.debug("Beginning download...")
-        self.__data_station.download_started = True
+        print("Beginning download...")
+        #self.__data_station.download_started = True
 
         # Prioritizes field data transfer over log data
         self.__sftp.downloadAllFieldData()
-        self.__sftp.downloadAllLogData()
+        #self.__sftp.downloadAllLogData()
 
         logging.info("Download complete")
 
@@ -66,7 +71,7 @@ class Download(threading.Thread):
         self.__sftp.close()
 
         # Mark download as complete so Navigation service knows to continue mission
-        self.__data_station.download_complete = True
+        #self.__data_station.download_complete = True
 
 
     def run(self):

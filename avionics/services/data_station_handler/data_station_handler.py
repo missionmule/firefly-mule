@@ -81,7 +81,8 @@ class DataStationHandler(object):
             time.sleep(r) # "Download" for random time between 10 and 100 seconds
 
         else: # This is the real world (ahhh!)
-            download_worker = Download(data_station_id,
+            # '.local' ensures visibility on the network
+            download_worker = Download(data_station_id+'.local',
                                        self.connection_timeout_millis)
 
             try:

@@ -12,7 +12,8 @@ import os
 
 class SFTPClient(object):
 
-    REMOTE_ROOT_DATA_DIRECTORY = '/media/usb/'
+    # Ensure pi users on payload and data station computers have r/w access to these directories
+    REMOTE_ROOT_DATA_DIRECTORY = '/media/'
     LOCAL_ROOT_DATA_DIRECTORY = '/srv/flight-data/'
 
     REMOTE_FIELD_DATA_SOURCE = REMOTE_ROOT_DATA_DIRECTORY + ''               # Location relative to SFTP root directory where the field data files are located; current SFTP root from pi@cameratrap.local /home/pi/
@@ -41,6 +42,7 @@ class SFTPClient(object):
     def __init__(self, _username, _password, _hostname):
 
         # Update destination directories to include hostname for data differentiation
+        _hostname, _suffix = __hostname.split('.')
         self.LOCAL_FIELD_DATA_DESTINATION = '%s/%s/' % (self.LOCAL_FIELD_DATA_DESTINATION, _hostname)
         self.LOCAL_LOG_DESTINATION = '%s/%s/' % (self.LOCAL_LOG_DESTINATION, _hostname)
 
@@ -50,6 +52,7 @@ class SFTPClient(object):
         self.__password = _password
         self.__hostname = _hostname
 
+        # This correlates to /home/pi/.ssh/known_hosts
         host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
         logging.getLogger("paramiko").setLevel(logging.DEBUG)
 
@@ -57,12 +60,10 @@ class SFTPClient(object):
             self.__hostkeytype = host_keys[self.__hostname].keys()[0]
             self.__hostkey = host_keys[self.__hostname][self.__hostkeytype]
 
-        print ("hostkeytype: "+self.__hostkeytype)
-#        print ("hostkey: "+self.__hostkey)
     def connect(self, timeout=60):
         # now, connect and use paramiko Transport to negotiate SSH2 across the connection
         logging.info("Connecting to data station... [hostname: %s]" % (self.__hostname))
-        print("connecting...")
+
         # Timeout is handled by Navigation.
         try:
             self.__transport = paramiko.Transport((self.__hostname, self.PORT),
@@ -78,8 +79,7 @@ class SFTPClient(object):
 
             self.__sftp = paramiko.SFTPClient.from_transport(self.__transport)
 
-            #self.__sftp.get_channel().settimeout(timeout) # Timeout in seconds on read/write operations on underlying SSH channel
-            print("con. established")
+            self.__sftp.get_channel().settimeout(timeout) # Timeout in seconds on read/write operations on underlying SSH channel
             logging.info("Connection established to data station: %s" % (self.__hostname))
 
             # Ensure remote root data directory exists
