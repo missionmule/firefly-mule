@@ -1,9 +1,10 @@
 import logging
+import threading
 
 from .sftp import SFTPClient
 from .timer import Timer
 
-class Download():
+class Download(threading.Thread):
 
     """
     An instance of this class is created when the payload is notified that
@@ -13,7 +14,7 @@ class Download():
 
     def __init__(self, _data_station_id, _connection_timeout_millis=1000):
 
-        #super(Download, self).__init__()
+        super(Download, self).__init__()
 
         self.__data_station_id = _data_station_id # Reference to DataStation object monitored by Navigation
         self.__connection_timeout_millis = _connection_timeout_millis
