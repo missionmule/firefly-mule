@@ -23,20 +23,17 @@ class Download(threading.Thread):
         self.__sftp = SFTPClient('pi', 'raspberry', self.__data_station_id)
 
     def _connect(self):
-        print("In connect")
         # Try to connect until SFTP client is connected or timeout event happens
         data_station_connection_timer = Timer()
         while not self.__sftp.is_connected:
 
             if data_station_connection_timer.time_elapsed() > 10000:
                 logging.error("Connection to data station %s failed permanently" % (self.__data_station_id))
-                print("permanent failure")
                 break
 
             # Sets low level SSH socket read/write timeout for all operations (listdir, get, etc)
             self.__sftp.connect(timeout=(1000))
 
-        print("After connection")
         #self.__sftp.downloadAllFieldData()
         # Throw an error to tell navigation to continue on
         if not self.__sftp.is_connected:
@@ -50,7 +47,6 @@ class Download(threading.Thread):
             2) Delete successfully transferred field data and logs from data station
         """
 
-        print("Beginning download...")
         #self.__data_station.download_started = True
 
         # Prioritizes field data transfer over log data

@@ -41,11 +41,8 @@ class DataStationHandler(object):
         """Loop forever and handle downloads as data stations are reached"""
 
         while self._alive:
-
             if not self.rx_queue.empty():    # You've got mail!
-
                 self._wake_download_and_sleep(rx_lock, is_downloading)
-
             else:
                 time.sleep(1)   # Check RX queue again in 1 second
 
@@ -97,7 +94,7 @@ class DataStationHandler(object):
 
                 # Attempt to join the thread after timeout.
                 # If still alive the download timed out.
-                download_worker.join(self.overall_timeout_millis)
+                download_worker.join(self.overall_timeout_millis/1000)
 
                 if download_worker.is_alive():
                     logging.info("Download timeout: Download cancelled")
