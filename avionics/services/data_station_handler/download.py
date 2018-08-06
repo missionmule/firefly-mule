@@ -12,7 +12,7 @@ class Download(threading.Thread):
     and then exits when the download is complete.
     """
 
-    def __init__(self, _data_station_id, _connection_timeout_millis=20000):
+    def __init__(self, _data_station_id, _connection_timeout_millis=120000):
 
         super(Download, self).__init__()
 
