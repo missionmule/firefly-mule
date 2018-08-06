@@ -91,7 +91,7 @@ class DataStationHandler(object):
             time.sleep(r) # "Download" for random time between 10 and 100 seconds
 
         # Only try download if wakeup was successful
-        else if (wakeup_successful): # This is the real world (ahhh!)
+        elif (wakeup_successful): # This is the real world (ahhh!)
             # '.local' ensures visibility on the network
             download_worker = Download(data_station_id.strip()+'.local',
                                        self.connection_timeout_millis)
