@@ -60,7 +60,7 @@ class SFTPClient(object):
             self.__hostkeytype = host_keys[self.__hostname].keys()[0]
             self.__hostkey = host_keys[self.__hostname][self.__hostkeytype]
 
-    def connect(self, timeout=60):
+    def connect(self, timeout=60000):
         # now, connect and use paramiko Transport to negotiate SSH2 across the connection
         logging.info("Connecting to data station... [hostname: %s]" % (self.__hostname))
 
@@ -78,7 +78,7 @@ class SFTPClient(object):
 
             self.__sftp = paramiko.SFTPClient.from_transport(self.__transport)
 
-            self.__sftp.get_channel().settimeout(timeout) # Timeout in seconds on read/write operations on underlying SSH channel
+            self.__sftp.get_channel().settimeout(timeout/1000) # Timeout in seconds on read/write operations on underlying SSH channel
             logging.info("Connection established to data station: %s" % (self.__hostname))
 
             # Ensure remote root data directory exists
