@@ -47,8 +47,6 @@ class Download(threading.Thread):
             2) Delete successfully transferred field data and logs from data station
         """
 
-        #self.__data_station.download_started = True
-
         # Prioritizes field data transfer over log data
         self.__sftp.downloadAllFieldData()
         #self.__sftp.downloadAllLogData()
@@ -62,13 +60,11 @@ class Download(threading.Thread):
         # self.__sftp.deleteAllFieldData()
         # self.__sftp.deleteAllLogData()
 
-        logging.info("Removal of successfully transferred files complete")
+        #logging.info("Removal of successfully transferred files complete")
 
         # Close connection to data station
+        logging.debug("Closing SFTP connection...")
         self.__sftp.close()
-
-        # Mark download as complete so Navigation service knows to continue mission
-        #self.__data_station.download_complete = True
 
 
     def run(self):
