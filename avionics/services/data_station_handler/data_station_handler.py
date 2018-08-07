@@ -4,6 +4,7 @@ import random
 import time
 import threading
 
+from .timer import Timer
 from .download import Download
 from .xbee import XBee
 
@@ -19,7 +20,7 @@ class DataStationHandler(object):
 
     XBee Wakeup:
         When the UAV arrives at a data station, the station is woken up with
-        an XBee RF signal codifying its data station UUID.
+        an XBee RF signal including its data station ID ('redwood', 'streetcat', etc.)
 
     """
 
@@ -40,11 +41,8 @@ class DataStationHandler(object):
         """Loop forever and handle downloads as data stations are reached"""
 
         while self._alive:
-
             if not self.rx_queue.empty():    # You've got mail!
-
-                self._wake_and_download(rx_lock, is_downloading)
-
+                self._wake_download_and_sleep(rx_lock, is_downloading)
             else:
                 time.sleep(1)   # Check RX queue again in 1 second
 
@@ -54,24 +52,34 @@ class DataStationHandler(object):
         logging.info("Stopping data station handler...")
         self._alive = False
 
-    def _wake_and_download(self, rx_lock, is_downloading):
+    def _wake_download_and_sleep(self, rx_lock, is_downloading):
         # Update system status (used by heartbeat)
         is_downloading.set()
 
         # Get data station ID as message from rx_queue
         rx_lock.acquire()
-        data_station_id = self.rx_queue.get()
+        data_station_id = self.rx_queue.get().strip() # Removes invisible characters
         rx_lock.release()
 
         logging.info('Data station arrival: %s', data_station_id)
 
         # Wake up data station
+        logging.info('Waking up over XBee...')
         self.xbee.send_command(data_station_id, 'POWER_ON')
 
-        # TODO: ensure this does not block if data station does not respond
-        if (os.getenv('TESTING') == 'False'):
+        xbee_wake_command_timer = Timer()
+        wakeup_successful = True
+        if not (os.getenv('TESTING') == 'True'):
             while not self.xbee.acknowledge(data_station_id, 'POWER_ON'):
+                logging.debug("POWER_ON data station %s", data_station_id)
                 self.xbee.send_command(data_station_id, 'POWER_ON')
+                time.sleep(0.5) # Try again in 0.5s
+
+                # Will try shutting down data station over XBee for 2 min before moving on
+                if xbee_wake_command_timer.time_elapsed() > 120:
+                    wakeup_successful = False
+                    logging.error("POWER_ON command ACK failure. Moving on...")
+                    break
 
         # Don't actually download
         if (os.getenv('TESTING') == 'True'):
@@ -80,8 +88,13 @@ class DataStationHandler(object):
             logging.debug('Simulating download for %i seconds', r)
             time.sleep(r) # "Download" for random time between 10 and 100 seconds
 
-        else: # This is the real world (ahhh!)
-            download_worker = Download(data_station_id,
+        # Only try download if wakeup was successful
+        elif (wakeup_successful): # This is the real world (ahhh!)
+            # '.local' ensures visibility on the network
+
+            logging.info('XBee ACK received, beginning download...')
+
+            download_worker = Download(data_station_id.strip()+'.local',
                                        self.connection_timeout_millis)
 
             try:
@@ -90,7 +103,7 @@ class DataStationHandler(object):
 
                 # Attempt to join the thread after timeout.
                 # If still alive the download timed out.
-                download_worker.join(self.overall_timeout_millis)
+                download_worker.join(self.overall_timeout_millis/1000)
 
                 if download_worker.is_alive():
                     logging.info("Download timeout: Download cancelled")
@@ -100,6 +113,22 @@ class DataStationHandler(object):
             except Exception as e:
                 logging.error(e)
 
+        # Wake up data station
+        logging.info('Shutting down data station %s...', data_station_id)
+        self.xbee.send_command(data_station_id, 'POWER_OFF')
+
+        xbee_sleep_command_timer = Timer()
+        # If the data station actually turned on and we're not in test mode, shut it down
+        if not (os.getenv('TESTING') == 'True') and (wakeup_successful == True):
+            while not self.xbee.acknowledge(data_station_id, 'POWER_OFF'):
+                logging.debug("POWER_OFF data station %s", data_station_id)
+                self.xbee.send_command(data_station_id, 'POWER_OFF')
+                time.sleep(0.5) # Try again in 0.5s
+
+                # Will try shutting down data station over XBee for 60 seconds before moving on
+                if xbee_sleep_command_timer.time_elapsed() > 60:
+                    logging.error("POWER_OFF command ACK failure. Moving on...")
+                    break
 
         # Mark task as complete, even if it fails
         self.rx_queue.task_done()

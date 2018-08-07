@@ -66,7 +66,10 @@ def main():
     services.append(ser)
 
     # Data station communication handling
-    dl = DataStationHandler(20000, 20000, 60000, ser.rx_queue)
+    # 2 min. connection timeout
+    # 2 min. read/write timeout
+    # 10 min. download timeout
+    dl = DataStationHandler(120000, 120000, 600000, ser.rx_queue)
     services.append(dl)
 
     # Heartbeat pushed to serial tx_queue every 500ms

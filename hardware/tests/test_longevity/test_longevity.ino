@@ -16,10 +16,10 @@ int testRound = 0;
 char heartbeatOne = 100;
 bool heartbeatReceived = true;
 
-String dataStationID[6] = {"redwood", "redwood"};
+String dataStationID[6] = {"redwood", "redwood", "streetcat", "falcon"};
 
 void setup() {
-  
+
   // start communication with companion computer
   raspi.begin(57600);
 
@@ -47,7 +47,7 @@ void loop() {
   while (testIsActive()){
     testRound++;
     lap = millis();
-    
+
     // simulate takeoff and journey to first data station
     Serial.print('\n'); Serial.println(formatMillis(millis()-timeStart));
     Serial.print("Proceding to data station number "); Serial.println(testRound);
@@ -77,7 +77,7 @@ void loop() {
     bool isDownloading = getStatus() == "Active";
     while (isDownloading && heartbeatReceived){
       checkHeartbeat();
-      logDownloadStatus();      
+      logDownloadStatus();
       if (heartbeatOne == '\0'){ isDownloading = false; }
     }
     Serial.print("\nDone downloading from data station "); Serial.println(testRound);
@@ -106,7 +106,7 @@ bool checkHeartbeat(){
   // end test if hearbeat was not received in time
   if (!heartbeatReceived)
     endTest(millis() - timeStart, "Heartbeat not received in over one second.");
-  
+
 }
 
 String formatMillis(unsigned long milliseconds){
@@ -115,7 +115,7 @@ String formatMillis(unsigned long milliseconds){
   int secRemain = seconds % 60;
   int hours = minutes / 60;
   int minRemain = minutes % 60;
-  
+
   String strSec;
   if (secRemain < 10) {
     strSec = "0" + String(secRemain);
@@ -134,19 +134,19 @@ String formatMillis(unsigned long milliseconds){
 
   String retVal = "";
   retVal = String(hours) + ":" + strMin + ":" + strSec;
-  
+
   return retVal;
 }
 
 void endTest(unsigned long timeEnd, String message){
   Serial.println("\n----------------------------------------");
   Serial.print("Time : "); Serial.println(formatMillis(timeEnd));
-  
+
   if (heartbeatReceived){
     Serial.println("    TEST PASSED");
   }
   else{
-    Serial.print("    TEST FAILED: "); Serial.println(message); 
+    Serial.print("    TEST FAILED: "); Serial.println(message);
     Serial.print("    Last Hearbeat Gap: "); Serial.println(heartbeatGap);
   }
 
@@ -176,4 +176,3 @@ void logDownloadStatus(){
     Serial.print("    Download Status: "); Serial.println(getStatus());
   }
 }
-
