@@ -5,6 +5,7 @@ import logging
 
 import paramiko
 import os
+import binascii
 
 # TODO: handle poor connection timeouts
 # TODO: add robust logging for flight records
@@ -42,9 +43,10 @@ class SFTPClient(object):
     def __init__(self, _username, _password, _hostname):
 
         # Update destination directories to include hostname for data differentiation
-        self.__hostname = _hostname
-        self.LOCAL_FIELD_DATA_DESTINATION = '%s/%s/' % (self.LOCAL_FIELD_DATA_DESTINATION, self.__hostname)
-        self.LOCAL_LOG_DESTINATION = '%s/%s/' % (self.LOCAL_LOG_DESTINATION, self.__hostname)
+        self.__hostname, self.__network_suffix = _hostname.split('.')
+        self.__download_id = binascii.b2a_hex(os.urandom(2)).decode()
+        self.LOCAL_FIELD_DATA_DESTINATION = '%s/%s-%s/' % (self.LOCAL_FIELD_DATA_DESTINATION, self.__hostname, self.__download_id)
+        self.LOCAL_LOG_DESTINATION = '%s/%s-%s/' % (self.LOCAL_LOG_DESTINATION, self.__hostname, self.__download_id)
 
         # TODO: change from password to public key cryptography
         # Login credentials
