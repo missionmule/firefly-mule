@@ -26,8 +26,7 @@ class XBee(object):
         self.data_station_id = None
         self.serial_port = serial_port
 
-        self.preamble_out = 'street'
-        self.preamble_in = 'cat'
+        self.start_delimiter = '~' # 0x7E in ASCII
 
         # TODO: make single dictionary
         self.encode = {
@@ -62,15 +61,10 @@ class XBee(object):
         if os.getenv('DEVELOPMENT') == 'True':
             return False
 
-        # Update hash with new data_station_id
-        hash = hashlib.md5()
-        hash.update(data_station_id.encode('utf-8'))
+        identity_code = data_station_id
 
-        # Get MD5 hash to 3 hex characters
-        identity_code = hash.hexdigest()[0:3]
-
-        logging.debug("XBee TX: %s" % self.preamble_out)
-        self.xbee_port.write(self.preamble_out.encode('utf-8'))
+        logging.debug("XBee TX: %s" % self.start_delimiter)
+        self.xbee_port.write(self.start_delimiter.encode('utf-8'))
 
         logging.debug("XBee TX: %s" % identity_code)
         self.xbee_port.write(identity_code.encode('utf-8'))
@@ -83,18 +77,17 @@ class XBee(object):
         Called after command is sent
         """
 
+        # Mimic successful ACK
+        if (os.getenv('DEVELOPMENT') == 'True'):
+            time.sleep(5)
+            return True
+
         iden_match = False
         identity_index = 0
 
-        preamble_success = False
-        preamble_index = 0
+        start_delimiter_success = False
 
-        # Update hash with new data_station_id
-        hash = hashlib.md5()
-        hash.update(data_station_id.encode('utf-8'))
-
-        # Get MD5 hash to 3 hex characters
-        identity_code = hash.hexdigest()[0:3]
+        identity_code = data_station_id
 
         command_code = self.encode[command]
 
@@ -108,27 +101,54 @@ class XBee(object):
                 return (incoming_byte == command_code)
 
             # Second pass: Check for identity match
-            elif (preamble_success == True):
+            elif (start_delimiter_success == True):
                 logging.debug("XBee checking ID")
                 if (incoming_byte == identity_code[identity_index]):
                     identity_index += 1
                 else:
-                    preamble_success = False
-                    preamble_index = 0
+                    start_delimiter_success = False
 
                 iden_match = (identity_index == 3)
 
-            # First pass: Check for preamble match
-            elif (incoming_byte == self.preamble_in[preamble_index]):
-                logging.debug("XBee checking preamble")
-                preamble_index+=1
-                preamble_success = (preamble_index == 3)
+            # First pass: Check for start delimiter match
+            elif (incoming_byte == self.start_delimiter):
+                logging.debug("XBee checking start delimiter")
+                start_delimiter_success = True
 
             # Reset
             else:
                 iden_match = False
-                preamble_success = False
-                preamble_index = 0
+                start_delimiter_success = False
                 identity_index = 0
 
         return False # Unsuccessful ACK
+
+# XBee hardware isolation debug test 
+if __name__ == '__main__':
+    xbee = XBee(serial_port="/dev/ttyUSB0")
+
+    xbee.connect()
+
+    target_station = raw_input("Enter target station ID: ")
+
+    while True:
+        print("---Command Options---")
+        print("   POWER_ON : 1")
+        print("   POWER_OFF : 2")
+        print("   EXTEND_TIME: 3")
+        cmd = raw_input("Enter desired Command: ")
+
+        if (cmd == '1'):
+            command = 'POWER_ON'
+        elif (cmd == '2'):
+            command = 'POWER_OFF'
+        else:
+            command = 'EXTEND_TIME'
+
+        xbee.send_command(target_station, command)
+        time.sleep(1)
+
+        if xbee.acknowledge(target_station, command):
+            print("Acknowledge\n")
+        else:
+            print("Not acknowledged\n")
