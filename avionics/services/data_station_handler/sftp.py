@@ -1,9 +1,11 @@
+from stat import S_ISDIR
 import socket
 import traceback
 import logging
 
 import paramiko
 import os
+import binascii
 
 # TODO: handle poor connection timeouts
 # TODO: add robust logging for flight records
@@ -11,6 +13,7 @@ import os
 
 class SFTPClient(object):
 
+    # Ensure pi users on payload and data station computers have r/w access to these directories
     REMOTE_ROOT_DATA_DIRECTORY = '/media/'
     LOCAL_ROOT_DATA_DIRECTORY = '/srv/flight-data/'
 
@@ -40,8 +43,10 @@ class SFTPClient(object):
     def __init__(self, _username, _password, _hostname):
 
         # Update destination directories to include hostname for data differentiation
-        self.LOCAL_FIELD_DATA_DESTINATION = '%s/%s/' % (self.LOCAL_FIELD_DATA_DESTINATION, _hostname)
-        self.LOCAL_LOG_DESTINATION = '%s/%s/' % (self.LOCAL_LOG_DESTINATION, _hostname)
+        self.__hostname, self.__network_suffix = _hostname.split('.')
+        self.__download_id = binascii.b2a_hex(os.urandom(2)).decode()
+        self.LOCAL_FIELD_DATA_DESTINATION = '%s/%s-%s/' % (self.LOCAL_FIELD_DATA_DESTINATION, self.__hostname, self.__download_id)
+        self.LOCAL_LOG_DESTINATION = '%s/%s-%s/' % (self.LOCAL_LOG_DESTINATION, self.__hostname, self.__download_id)
 
         # TODO: change from password to public key cryptography
         # Login credentials
@@ -49,13 +54,15 @@ class SFTPClient(object):
         self.__password = _password
         self.__hostname = _hostname
 
-        host_keys = paramiko.util.load_host_keys(os.path.expanduser('/home/pi/.ssh/known_hosts'))
+        # This correlates to /home/pi/.ssh/known_hosts
+        host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+        logging.getLogger("paramiko").setLevel(logging.DEBUG)
 
         if self.__hostname in host_keys:
             self.__hostkeytype = host_keys[self.__hostname].keys()[0]
             self.__hostkey = host_keys[self.__hostname][self.__hostkeytype]
 
-    def connect(self, timeout=60):
+    def connect(self, timeout=60000):
         # now, connect and use paramiko Transport to negotiate SSH2 across the connection
         logging.info("Connecting to data station... [hostname: %s]" % (self.__hostname))
 
@@ -66,7 +73,6 @@ class SFTPClient(object):
 
             # Compress files on data station before sending over Wi-Fi to drone
             self.__transport.use_compression()
-
             self.__transport.connect(self.__host_key, self.__username, self.__password,
                                      gss_host=socket.getfqdn(self.__hostname),
                                      gss_auth = self.USE_GSS_API,
@@ -74,8 +80,7 @@ class SFTPClient(object):
 
             self.__sftp = paramiko.SFTPClient.from_transport(self.__transport)
 
-            self.__sftp.get_channel().settimeout(timeout) # Timeout in seconds on read/write operations on underlying SSH channel
-
+            self.__sftp.get_channel().settimeout(timeout/1000) # Timeout in seconds on read/write operations on underlying SSH channel
             logging.info("Connection established to data station: %s" % (self.__hostname))
 
             # Ensure remote root data directory exists
@@ -146,7 +151,7 @@ class SFTPClient(object):
         """
         logging.info("Downloading file: %s" % (file_name))
         try:
-            self.__sftp.get(remote_path+file_name, local_destination+file_name)
+            self.__sftp.get(os.path.join(remote_path,file_name), os.path.join(local_destination,file_name))
         except IOError as e:
             logging.error(e)
         except socket.timeout:
@@ -175,16 +180,34 @@ class SFTPClient(object):
     # Field data methods
     # -----------------------
 
+    def _walk(self, remote_path):
+        path=remote_path
+        files=[]
+        folders=[]
+
+        for f in self.__sftp.listdir_attr(remote_path):
+            if S_ISDIR(f.st_mode):
+                folders.append(f.filename)
+            else:
+                files.append(f.filename)
+
+        if files:
+            yield path, files
+
+        for folder in folders:
+            new_path = os.path.join(remote_path, folder)
+            for x in self._walk(new_path):
+                yield x
+
     # TODO: ensure this handles files with same name in different directories
     def downloadAllFieldData(self):
         """
         Download all data station field data
         Recurses from /media/ dir to download all data
         """
-        for dirpath, dirs, files in os.walk(self.REMOTE_FIELD_DATA_SOURCE):
-            logging.info("Downloading %i field data files..." % (len(files)))
-            for file_name in files:
-                self.downloadFile(dirpath, self.LOCAL_FIELD_DATA_DESTINATION, file_name)
+        for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
+            for file in files:
+                self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
 
     def deleteAllFieldData(self):
         """

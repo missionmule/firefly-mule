@@ -1,3 +1,4 @@
+import logging
 import threading
 
 from .sftp import SFTPClient
@@ -11,7 +12,7 @@ class Download(threading.Thread):
     and then exits when the download is complete.
     """
 
-    def __init__(self, _data_station_id, _connection_timeout_millis):
+    def __init__(self, _data_station_id, _connection_timeout_millis=120000):
 
         super(Download, self).__init__()
 
@@ -26,16 +27,18 @@ class Download(threading.Thread):
         data_station_connection_timer = Timer()
         while not self.__sftp.is_connected:
 
-            if data_station_connection_timer.time_elapsed() > self.__connection_timeout_millis / 1000:
+            if data_station_connection_timer.time_elapsed() > self.__connection_timeout_millis/1000:
                 logging.error("Connection to data station %s failed permanently" % (self.__data_station_id))
                 break
 
             # Sets low level SSH socket read/write timeout for all operations (listdir, get, etc)
-            self.__sftp.connect(timeout=(self.__connection_timeout_millis / 1000))
+            self.__sftp.connect()
 
+        #self.__sftp.downloadAllFieldData()
         # Throw an error to tell navigation to continue on
         if not self.__sftp.is_connected:
             raise Exception("Connection Timeout")
+
 
     def _start(self):
         """
@@ -44,11 +47,9 @@ class Download(threading.Thread):
             2) Delete successfully transferred field data and logs from data station
         """
 
-        logging.debug("Beginning download...")
-
         # Prioritizes field data transfer over log data
         self.__sftp.downloadAllFieldData()
-        self.__sftp.downloadAllLogData()
+        #self.__sftp.downloadAllLogData()
 
         logging.info("Download complete")
 
