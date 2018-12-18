@@ -22,8 +22,8 @@ class TestDataStationHandler(unittest.TestCase):
     def test_clears_rx_queue(self):
         """Data station handler clears RX queue as it receives station IDs"""
 
-        self._rx_queue.put('streetcat')
+        self._rx_queue.put('123')
 
-        self._data_station_handler._wake_and_download(self._rx_lock, self._is_downloading)
+        self._data_station_handler._wake_download_and_sleep(self._rx_lock, self._is_downloading)
 
         self.assertEquals(self._rx_queue.qsize(), 0)
