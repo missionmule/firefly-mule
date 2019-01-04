@@ -55,7 +55,7 @@ class SFTPClient(object):
         self.__hostname = _hostname
 
         # This correlates to /home/pi/.ssh/known_hosts
-        host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
+        host_keys = paramiko.util.load_host_keys(os.path.expanduser('/home/pi/.ssh/known_hosts'))
         logging.getLogger("paramiko").setLevel(logging.DEBUG)
 
         if self.__hostname in host_keys:
