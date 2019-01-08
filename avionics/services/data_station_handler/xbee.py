@@ -129,7 +129,7 @@ if __name__ == '__main__':
 
     xbee.connect()
 
-    target_station = raw_input("Enter target station ID: ")
+    target_station = input("Enter target station ID: ")
 
     while True:
         print("---Command Options---")
