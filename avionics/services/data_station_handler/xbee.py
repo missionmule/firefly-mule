@@ -123,7 +123,7 @@ class XBee(object):
 
         return False # Unsuccessful ACK
 
-# XBee hardware isolation debug test 
+# XBee hardware isolation debug test
 if __name__ == '__main__':
     xbee = XBee(serial_port="/dev/ttyUSB0")
 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
         print("   POWER_ON : 1")
         print("   POWER_OFF : 2")
         print("   EXTEND_TIME: 3")
-        cmd = raw_input("Enter desired Command: ")
+        cmd = input("Enter desired Command: ")
 
         if (cmd == '1'):
             command = 'POWER_ON'
