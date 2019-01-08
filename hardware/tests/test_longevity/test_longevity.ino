@@ -1,6 +1,6 @@
 #include <SoftwareSerial.h>
 
-SoftwareSerial raspi(10, 11); // RX, TX
+SoftwareSerial raspi(10, 9); // RX, TX
 
 // Timers
 unsigned long timeStart;
@@ -16,7 +16,7 @@ int testRound = 0;
 char heartbeatOne = 100;
 bool heartbeatReceived = true;
 
-String dataStationID[6] = {"001", "002", "003", "004"};
+String dataStationID[6] = {"001","113","100"};
 
 void setup() {
 
