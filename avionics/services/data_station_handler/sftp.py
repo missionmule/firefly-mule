@@ -68,17 +68,17 @@ class SFTPClient(object):
 
         # Timeout is handled by Navigation.
         try:
-            self.__transport = paramiko.Transport((self.__hostname, self.PORT),
-                                                  default_window_size=2147483647) # Speeds up download speed
+            self.__transport = paramiko.Transport((self.__hostname, self.PORT)) # Speeds up download speed
 
             # Compress files on data station before sending over Wi-Fi to drone
-            self.__transport.use_compression()
             self.__transport.connect(self.__host_key, self.__username, self.__password,
                                      gss_host=socket.getfqdn(self.__hostname),
                                      gss_auth = self.USE_GSS_API,
                                      gss_kex = self.DO_GSS_API_KEY_EXCHANGE)
 
             self.__sftp = paramiko.SFTPClient.from_transport(self.__transport)
+
+            self.__sftp.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
             self.__sftp.get_channel().settimeout(timeout/1000) # Timeout in seconds on read/write operations on underlying SSH channel
             logging.info("Connection established to data station: %s" % (self.__hostname))
@@ -207,7 +207,8 @@ class SFTPClient(object):
         """
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
             for file in files:
-                self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
+                if file.endswith('.JPG'):
+                    self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
 
     def deleteAllFieldData(self):
         """
