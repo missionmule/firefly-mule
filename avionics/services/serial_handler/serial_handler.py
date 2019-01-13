@@ -94,6 +94,7 @@ class SerialHandler(object):
         while self._alive:
             while not self.tx_queue.empty():
                 self._write()   # Pulled out to test
+            time.sleep(0.1) # Check Tx queue again in 100ms (and give the CPU a break!)
 
         self._alive = False
         logging.error('Serial writer thread terminated')
