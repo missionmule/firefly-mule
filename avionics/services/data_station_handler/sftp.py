@@ -205,7 +205,7 @@ class SFTPClient(object):
         """
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
             for file in files:
-                if file.endswith('.JPG'):
+                if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
                     self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
 
     def deleteAllFieldData(self):

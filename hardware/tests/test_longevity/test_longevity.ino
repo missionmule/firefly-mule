@@ -16,7 +16,7 @@ int testRound = 0;
 char heartbeatOne = 100;
 bool heartbeatReceived = true;
 
-String dataStationID[6] = {"001","113","100"};
+String dataStationID[6] = {"001","106","100","001","106","100"};
 
 void setup() {
 
@@ -32,7 +32,7 @@ void setup() {
     Serial.print(i);
     Serial.println(" seconds...");
   }
-  delay(1000);
+  delay(5000);
 }
 
 void loop() {
@@ -65,7 +65,7 @@ void loop() {
     }
     raspi.write('\n');
 
-    // wait for 5 seconds for payload to aknowloedge
+    // wait for 5 seconds for payload to acknowloedge
     unsigned long downloadTimeStart = millis();
     lap = millis();
     while ((((millis()-lap) < 5*1000)) && heartbeatReceived && (getStatus() = "Idle")){
@@ -105,7 +105,7 @@ bool checkHeartbeat(){
 
   // end test if hearbeat was not received in time
   if (!heartbeatReceived)
-    endTest(millis() - timeStart, "Heartbeat not received in over one second.");
+    endTest(millis() - timeStart, "Heartbeat not received");
 
 }
 
