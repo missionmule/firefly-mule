@@ -78,8 +78,6 @@ class SFTPClient(object):
 
             self.__sftp = paramiko.SFTPClient.from_transport(self.__transport)
 
-            self.__sftp.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
             self.__sftp.get_channel().settimeout(timeout/1000) # Timeout in seconds on read/write operations on underlying SSH channel
             logging.info("Connection established to data station: %s" % (self.__hostname))
 
