@@ -12,12 +12,13 @@ class Download(threading.Thread):
     and then exits when the download is complete.
     """
 
-    def __init__(self, _data_station_id, _connection_timeout_millis=120000):
+    def __init__(self, _data_station_id, _connection_timeout_millis=120000, _redownload_request=False):
 
         super(Download, self).__init__()
 
         self.__data_station_id = _data_station_id # Reference to DataStation object monitored by Navigation
         self.__connection_timeout_millis = _connection_timeout_millis
+        self._redownload_request = _redownload_request # TODO: set based on web server status
 
         # TODO: change this to dynamically distribute required certificate
         self.__sftp = SFTPClient('pi', 'raspberry', self.__data_station_id)
@@ -34,6 +35,10 @@ class Download(threading.Thread):
             # Sets low level SSH socket read/write timeout for all operations (listdir, get, etc)
             self.__sftp.connect()
 
+            # Without this, the service spins when the data station is booted,
+            # but not yet accepting SSH connections
+            time.sleep(0.5)
+
         #self.__sftp.downloadAllFieldData()
         # Throw an error to tell navigation to continue on
         if not self.__sftp.is_connected:
@@ -46,9 +51,18 @@ class Download(threading.Thread):
             1) Download field data and data station logs to drone
             2) Delete successfully transferred field data and logs from data station
         """
+        # Handle two-pass data deletion: either redownload or delete previously
+        # downloaded data (which can be identified by its existance in the `/.tmp/` directory)
+        if self.__redownload_request == True:
+            # Flight operator has ordered redownload of previously downloaded data
+            self.__sftp.downloadTmpFieldData()
+        else:
+            # Remove data that has been placed in /.tmp/ to await removal on
+            # the UAV's second pass
+            self.__sftp.deleteTmpFieldData()
 
         # Prioritizes field data transfer over log data
-        self.__sftp.downloadAllFieldData()
+        self.__sftp.downloadNewFieldData()
         #self.__sftp.downloadAllLogData()
 
         logging.info("Download complete")

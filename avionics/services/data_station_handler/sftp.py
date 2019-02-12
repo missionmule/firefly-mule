@@ -155,6 +155,23 @@ class SFTPClient(object):
         except socket.timeout:
             logging.error("Listing remote directories timeout")
 
+    def moveFileToTmp(self, remote_path, file_name):
+        """
+        Move file to /.tmp/ directory on sensor to await second pass deletion
+        """
+        logging.debug("Moving to /.tmp/: %s" % (file_name))
+
+        # TODO: Eliminate the need for a .tmp directory creation with each move
+        # Make sure '.tmp' exists in current directory
+        try:
+            self.__sftp.mkdir(os.path.join(remote_path, '.tmp'))
+        except IOError:
+            logging.debug('{0} remote log directory already exists'.format(os.path.join(remote_path, '.tmp')))
+
+        oldpath = os.path.join(remote_path, file_name)
+        newpath = os.path.join(remote_path, '.tmp', file_name)
+        self.__sftp.rename(oldpath, newpath)
+
     def deleteFile(self, remote_path, file_name):
         """
         Delete file from given path on remote data station
@@ -198,24 +215,46 @@ class SFTPClient(object):
                 yield x
 
     # TODO: ensure this handles files with same name in different directories
-    def downloadAllFieldData(self):
+    def downloadNewFieldData(self):
         """
         Download all data station field data
         Recurses from /media/ dir to download all data
         """
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
-            for file in files:
-                if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
-                    self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
+            if not (path.endswith('.tmp') or path.endswith('.tmp/')):
+                for file in files:
+                    if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
+                        try:
+                            self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
+                            self.moveFileToTmp(path, file)
+                        except: # Don't move file to tmp if error is raised in download
+                            pass
 
-    def deleteAllFieldData(self):
+    def downloadTmpFieldData(self):
         """
-        Delete all log data that has successfully been downloaded
+        Download data from /.tmp/ directory on sensor
+        This method is called when the flight operator has requested a redownload
+        of previously downloaded data (which has since been moved to the /.tmp/
+        directory to await deletion on the second pass of the UAV).
         """
-        # TODO: only delete files that 100% downloaded.
-        # If connection times out, some file names may exist, but the files are empty.
+        for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
+            # Recurse into /media/ and download only `.tmp` directories
+            if path.endswith('.tmp') or path.endswith('.tmp/'):
+                for file in files:
+                    if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
+                        self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
 
-        pass
+    def deleteTmpFieldData(self):
+        """
+        Delete all data from /.tmp/ directory on sensor file system
+        This data was moved to the /.tmp/ directory following a successful
+        download and this method is called unless the flight operator has ordered
+        a redownload of previously downloaded data.
+        """
+        for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
+            if path.endswith('.tmp') or path.endswith('.tmp/'):
+                for file in files:
+                    self.deleteFile(path, file)
 
     # -----------------------
     # Log data methods
