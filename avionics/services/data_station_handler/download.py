@@ -23,7 +23,7 @@ class Download(threading.Thread):
         self._flight_id = _flight_id
 
         # TODO: pull from private file
-        self._sftp = SFTPClient('pi', 'raspberry', self._data_station_id)
+        self._sftp = SFTPClient('pi', 'raspberry', self._data_station_id, self._flight_id)
 
         self.db = Database()
 

@@ -11,13 +11,13 @@ class SFTPClient(object):
 
     # Ensure pi users on payload and data station computers have r/w access to these directories
     REMOTE_ROOT_DATA_DIRECTORY = '/media/'
-    LOCAL_ROOT_DATA_DIRECTORY = '/srv/flight-data/'
+    LOCAL_ROOT_DATA_DIRECTORY = '/srv/'
 
     REMOTE_FIELD_DATA_SOURCE = REMOTE_ROOT_DATA_DIRECTORY + ''               # Location relative to SFTP root directory where the field data files are located; current SFTP root from pi@cameratrap.local /home/pi/
     LOCAL_FIELD_DATA_DESTINATION = LOCAL_ROOT_DATA_DIRECTORY + 'field/'      # Where downloaded data station field data will be kept
 
-    REMOTE_LOG_SOURCE = REMOTE_ROOT_DATA_DIRECTORY+'logs/'                   # Location relative to SFTP root directory where the data station log files are located
-    LOCAL_LOG_DESTINATION = LOCAL_ROOT_DATA_DIRECTORY + 'logs/'              # Where downloaded data station logs will be kept
+    # REMOTE_LOG_SOURCE = REMOTE_ROOT_DATA_DIRECTORY+'logs/'                   # Location relative to SFTP root directory where the data station log files are located
+    # LOCAL_LOG_DESTINATION = LOCAL_ROOT_DATA_DIRECTORY + 'logs/'              # Where downloaded data station logs will be kept
 
     # Paramiko client configuration
     PORT = 22
@@ -36,13 +36,12 @@ class SFTPClient(object):
 
     is_connected = False
 
-    def __init__(self, _username, _password, _hostname):
+    def __init__(self, _username, _password, _hostname, _flight_id):
 
         # Update destination directories to include hostname for data differentiation
         self.__hostname, self.__network_suffix = _hostname.split('.')
-        self.__download_id = binascii.b2a_hex(os.urandom(2)).decode()
-        self.LOCAL_FIELD_DATA_DESTINATION = '%s/%s-%s/' % (self.LOCAL_FIELD_DATA_DESTINATION, self.__hostname, self.__download_id)
-        self.LOCAL_LOG_DESTINATION = '%s/%s-%s/' % (self.LOCAL_LOG_DESTINATION, self.__hostname, self.__download_id)
+        self.LOCAL_FIELD_DATA_DESTINATION = os.path.join(self.LOCAL_ROOT_DATA_DIRECTORY, _flight_id, self.__hostname)
+        # self.LOCAL_LOG_DESTINATION = '%s/%s/%s/' % (self.LOCAL_ROOT_DATA_DIRECTORY, _flight_id, self.__hostname)
 
         # TODO: change from password to public key cryptography
         # Login credentials
@@ -50,9 +49,8 @@ class SFTPClient(object):
         self.__password = _password
         self.__hostname = _hostname
 
-        # This correlates to /home/pi/.ssh/known_hosts
         host_keys = paramiko.util.load_host_keys(os.path.expanduser('/home/pi/.ssh/known_hosts'))
-        logging.getLogger("paramiko").setLevel(logging.DEBUG)
+        logging.getLogger("paramiko").setLevel(logging.INFO)
 
         if self.__hostname in host_keys:
             self.__hostkeytype = host_keys[self.__hostname].keys()[0]
@@ -104,9 +102,9 @@ class SFTPClient(object):
             if not os.path.exists(self.LOCAL_FIELD_DATA_DESTINATION):
                 os.makedirs(self.LOCAL_FIELD_DATA_DESTINATION)
 
-            # Ensure local log data directory exists
-            if not os.path.exists(self.LOCAL_LOG_DESTINATION):
-                os.makedirs(self.LOCAL_LOG_DESTINATION)
+            # # Ensure local log data directory exists
+            # if not os.path.exists(self.LOCAL_LOG_DESTINATION):
+            #     os.makedirs(self.LOCAL_LOG_DESTINATION)
 
             self.is_connected = True
 
