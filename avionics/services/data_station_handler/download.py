@@ -3,7 +3,7 @@ import threading
 
 from .sftp import SFTPClient
 from .timer import Timer
-from ..database from Database
+from .database import Database
 
 class Download(threading.Thread):
 
@@ -13,7 +13,7 @@ class Download(threading.Thread):
     and then exits when the download is complete.
     """
 
-    def __init__(self, _data_station_id, _connection_timeout_millis=120000, _redownload_request, _flight_id):
+    def __init__(self, _data_station_id, _redownload_request, _flight_id, _connection_timeout_millis=120000):
 
         super(Download, self).__init__()
 

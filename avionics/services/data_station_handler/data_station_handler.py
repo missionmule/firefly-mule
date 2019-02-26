@@ -7,7 +7,7 @@ import threading
 from .timer import Timer
 from .download import Download
 from .xbee import XBee
-from ..database import Database
+from .database import Database
 
 class DataStationHandler(object):
     """Communication handler for data stations (XBee station wakeup and SFTP download)
