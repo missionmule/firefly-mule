@@ -7,6 +7,7 @@ import threading
 from .timer import Timer
 from .download import Download
 from .xbee import XBee
+from ..database import Database
 
 class DataStationHandler(object):
     """Communication handler for data stations (XBee station wakeup and SFTP download)
@@ -32,7 +33,9 @@ class DataStationHandler(object):
         self.overall_timeout_millis = _overall_timeout_millis
         self.rx_queue = _rx_queue
         self.xbee = XBee()
+        self.db = Database()
         self._alive = True
+        self.flight_id = self.db.insert_new_flight()
 
     def connect(self):
         self.xbee.connect()
@@ -60,6 +63,13 @@ class DataStationHandler(object):
         rx_lock.acquire()
         data_station_id = self.rx_queue.get().strip() # Removes invisible characters
         rx_lock.release()
+
+        self.db.insert_data_station(data_station_id)
+
+        self.db.add_station_to_flight(data_station_id, self.flight_id)
+
+        # Add the station to flights_stations table to pair with flight with percent 0.
+        self._redownload_request = False # [ get redownload status from database for this ID ]
 
         logging.info('Data station arrival: %s', data_station_id)
 
@@ -94,8 +104,11 @@ class DataStationHandler(object):
 
             logging.info('XBee ACK received, beginning download...')
 
+            redownload_request = self.db.get_redownload_request(data_station_id)
+
             download_worker = Download(data_station_id.strip()+'.local',
-                                       self.connection_timeout_millis)
+                                       self.connection_timeout_millis,
+                                       redownload_request, self.flight_id)
 
             try:
                 # This throws an error if the connection times out

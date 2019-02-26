@@ -7,10 +7,6 @@ import paramiko
 import os
 import binascii
 
-# TODO: handle poor connection timeouts
-# TODO: add robust logging for flight records
-# TODO: add certificate-based connection with certificate paired to camera-trap prior to deployment
-
 class SFTPClient(object):
 
     # Ensure pi users on payload and data station computers have r/w access to these directories
@@ -219,16 +215,34 @@ class SFTPClient(object):
         """
         Download all data station field data
         Recurses from /media/ dir to download all data
+
+        Returns number of files to be downloaded as well as files successfully downloaded.
         """
+
+        num_files_to_download = 0
+        num_files_downloaded = 0
+
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
             if not (path.endswith('.tmp') or path.endswith('.tmp/')):
+
+                # Loop through all files and count number to be downloaded
+                # This is separate from the loop below to account for inaccurate
+                # counts as a result of a failed download or download timeout.
+                for file in files:
+                    if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
+                        num_files_to_download+=1
+
+                # Download files
                 for file in files:
                     if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
                         try:
                             self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
                             self.moveFileToTmp(path, file)
+                            num_files_downloaded+=1
                         except: # Don't move file to tmp if error is raised in download
                             pass
+
+        return num_files_downloaded, num_files_to_download
 
     def downloadTmpFieldData(self):
         """
@@ -236,13 +250,34 @@ class SFTPClient(object):
         This method is called when the flight operator has requested a redownload
         of previously downloaded data (which has since been moved to the /.tmp/
         directory to await deletion on the second pass of the UAV).
+
+        Returns number of files to be downloaded as well as files successfully downloaded.
         """
+
+        num_files_to_download = 0
+        num_files_downloaded = 0
+
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
+
+            # Loop through all files and count number to be downloaded
+            # This is separate from the loop below to account for inaccurate
+            # counts as a result of a failed download or download timeout.
+
             # Recurse into /media/ and download only `.tmp` directories
             if path.endswith('.tmp') or path.endswith('.tmp/'):
                 for file in files:
                     if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
-                        self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
+                        num_files_to_download+=1
+
+                for file in files:
+                    if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
+                        try:
+                            self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
+                            num_files_downloaded+=1
+                        except:
+                            pass
+
+        return num_files_downloaded, num_files_to_download
 
     def deleteTmpFieldData(self):
         """

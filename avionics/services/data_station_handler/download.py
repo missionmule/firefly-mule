@@ -3,6 +3,7 @@ import threading
 
 from .sftp import SFTPClient
 from .timer import Timer
+from ..database from Database
 
 class Download(threading.Thread):
 
@@ -12,16 +13,18 @@ class Download(threading.Thread):
     and then exits when the download is complete.
     """
 
-    def __init__(self, _data_station_id, _connection_timeout_millis=120000, _redownload_request=False):
+    def __init__(self, _data_station_id, _connection_timeout_millis=120000, _redownload_request, _flight_id):
 
         super(Download, self).__init__()
 
-        self.__data_station_id = _data_station_id # Reference to DataStation object monitored by Navigation
+        self.__data_station_id = _data_station_id
         self.__connection_timeout_millis = _connection_timeout_millis
-        self._redownload_request = _redownload_request # TODO: set based on web server status
+        self._redownload_request = Boolean(_redownload_request)
+        self._flight_id = _flight_id
 
-        # TODO: change this to dynamically distribute required certificate
+        # TODO: pull from private file
         self.__sftp = SFTPClient('pi', 'raspberry', self.__data_station_id)
+        self.db = Database()
 
     def _connect(self):
         # Try to connect until SFTP client is connected or timeout event happens
@@ -53,28 +56,31 @@ class Download(threading.Thread):
         """
         # Handle two-pass data deletion: either redownload or delete previously
         # downloaded data (which can be identified by its existance in the `/.tmp/` directory)
+
+        new_files_downloaded = 0
+        old_files_downloaded = 0
+
+        new_files_to_download = 0
+        old_files_to_download = 0
+
         if self.__redownload_request == True:
             # Flight operator has ordered redownload of previously downloaded data
-            self.__sftp.downloadTmpFieldData()
+            old_files_downloaded, old_files_to_download = self.__sftp.downloadTmpFieldData()
         else:
             # Remove data that has been placed in /.tmp/ to await removal on
             # the UAV's second pass
             self.__sftp.deleteTmpFieldData()
 
         # Prioritizes field data transfer over log data
-        self.__sftp.downloadNewFieldData()
+        new_files_downloaded, new_files_to_download = self.__sftp.downloadNewFieldData()
         #self.__sftp.downloadAllLogData()
 
-        logging.info("Download complete")
+        # Calculate percent of files downloaded and round down to nearest integer
+        percent_downloaded = int((new_files_downloaded+old_files_downloaded)/(new_files_to_download+old_files_to_download))
 
-        logging.debug("Beginning removal of successfully transferred files...")
+        self.db.update_percent_downloaded(self._data_station_id, self._flight_id, percent_downloaded)
 
-        # Removes only files that are successfully transferred to vehicle
-        # TODO: uncomment this out when system is more stable
-        # self.__sftp.deleteAllFieldData()
-        # self.__sftp.deleteAllLogData()
-
-        #logging.info("Removal of successfully transferred files complete")
+        logging.info("Download complete [%s% downloaded]" % percent_downloaded)
 
         # Close connection to data station
         logging.debug("Closing SFTP connection...")
