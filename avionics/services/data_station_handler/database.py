@@ -11,12 +11,10 @@ class Database(object):
         # a local file so we don't need a persistent connection.
         # ...It also simplifies things. :)
 
-        # if not (os.getenv('TESTING') == 'True'):
-        #     self.db_path = '/var/lib/avionics.db';
-        # else:
-        #     self.db_path = 'avionics.db';
-
-        self.db_path = 'avionics.db'
+        if not (os.getenv('TESTING') == 'True'):
+            self.db_path = '/var/lib/avionics.db';
+        else:
+            self.db_path = 'avionics.db';
 
         # Ensure that the database exists and the full schema is there
         conn = sqlite3.connect(self.db_path);
