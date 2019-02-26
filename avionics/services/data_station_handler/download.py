@@ -19,11 +19,12 @@ class Download(threading.Thread):
 
         self._data_station_id = _data_station_id
         self._connection_timeout_millis = _connection_timeout_millis
-        self._redownload_request = Boolean(_redownload_request)
+        self._redownload_request = _redownload_request
         self._flight_id = _flight_id
 
         # TODO: pull from private file
         self._sftp = SFTPClient('pi', 'raspberry', self._data_station_id)
+
         self.db = Database()
 
     def _connect(self):
@@ -74,10 +75,13 @@ class Download(threading.Thread):
         new_files_downloaded, new_files_to_download = self._sftp.downloadNewFieldData()
         #self._sftp.downloadAllLogData()
 
-        # Calculate percent of files downloaded and round down to nearest integer
-        percent_downloaded = int((new_files_downloaded+old_files_downloaded)/(new_files_to_download+old_files_to_download))
+        # Calculate percent of files downloaded and round down to the nearest integer
+        successful_downloads = new_files_downloaded+old_files_downloaded
+        total_files = new_files_to_download+old_files_to_download
+        percent_downloaded = int(successful_downloads/total_files)
 
-        self.db.update_percent_downloaded(self._data_station_id, self._flight_id, percent_downloaded)
+        self.db.update_flight_station_stats(self._data_station_id,
+            self._flight_id, percent_downloaded, successful_downloads, total_files)
 
         logging.info("Download complete [%s% downloaded]" % percent_downloaded)
 

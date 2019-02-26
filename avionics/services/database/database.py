@@ -6,8 +6,9 @@ class Database(object):
 
     def __init__(self):
         # Instead of instantiating the connection here, we create and destroy
-        # a connection with each call because SQLite is just reading/editing a local file
-        # so we don't need a persistent connection. It also simplifies things. :)
+        # a database connection with each call because SQLite is just reading/editing
+        # a local file so we don't need a persistent connection.
+        # ...It also simplifies things. :)
         pass
 
     def insert_data_station(self, data_station_id):
@@ -57,22 +58,22 @@ class Database(object):
 
         item = (flight_id, data_station_id,)
 
-        c.execute('''INSERT INTO flights_stations (flight_id, station_id, percent)
-                     VALUES (?, ?, 0)''', item)
+        c.execute('''INSERT INTO flights_stations (flight_id, station_id, successful_downloads, total_files)
+                     VALUES (?, ?, 0, 0)''', item)
 
         conn.commit()
         conn.close()
 
-    def update_percent_downloaded(self, data_station_id, flight_id, percent):
+    def update_flight_station_stats(self, data_station_id, flight_id, successful_downloads, total_files):
         """Updates the percent of data downloaded for a specific data station"""
 
         conn = sqlite3.connect('/var/lib/avionics.db')
         c = conn.cursor()
 
-        item = (percent, data_station_id, flight_id, )
+        item = (successful_downloads, total_files, data_station_id, flight_id, )
 
         c.execute('''UPDATE flights_stations
-                     SET percent=?
+                     SET successful_downloads=?, total_files=?
                      WHERE (station_id=? AND flight_id=?)''', item)
 
         conn.commit()
@@ -91,7 +92,9 @@ class Database(object):
                      WHERE station_id=?
                      LIMIT 1''', item)
 
-        redownload = c.fetchone()
+        # SQLite stores the redownload boolean as 0/1 integer so we must convert
+        # the integer to a boolean here
+        redownload = Boolean(c.fetchone())
 
         conn.close()
 
