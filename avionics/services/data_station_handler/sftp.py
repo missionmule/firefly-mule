@@ -153,7 +153,7 @@ class SFTPClient(object):
         """
         Move file to /.tmp/ directory on sensor to await second pass deletion
         """
-        logging.debug("Moving to /.tmp/: %s" % (file_name))
+        logging.info("Moving to /.tmp/: %s" % (file_name))
 
         # TODO: Eliminate the need for a .tmp directory creation with each move
         # Make sure '.tmp' exists in current directory
@@ -170,9 +170,9 @@ class SFTPClient(object):
         """
         Delete file from given path on remote data station
         """
-        logging.info("Deleting file from camera trap: %s" % (file_name))
+        logging.info("Deleting file from camera trap: %s" % (os.path.join(remote_path,file_name))
         try:
-            self.__sftp.remove(remote_path+file_name)
+            self.__sftp.remove(os.path.join(remote_path,file_name))
         except IOError as e:
             logging.error(e)
         except socket.timeout:
