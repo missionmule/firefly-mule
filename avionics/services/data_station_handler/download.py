@@ -1,5 +1,6 @@
 import logging
 import threading
+import time
 
 from .sftp import SFTPClient
 from .timer import Timer
