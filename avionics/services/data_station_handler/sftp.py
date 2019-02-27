@@ -170,7 +170,7 @@ class SFTPClient(object):
         """
         Delete file from given path on remote data station
         """
-        logging.info("Deleting file from camera trap: %s" % (os.path.join(remote_path,file_name))
+        logging.info("Deleting file from camera trap: %s" % (os.path.join(remote_path,file_name)))
         try:
             self.__sftp.remove(os.path.join(remote_path,file_name))
         except IOError as e:
