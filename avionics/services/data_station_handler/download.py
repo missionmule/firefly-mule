@@ -89,7 +89,7 @@ class Download(threading.Thread):
         self.db.update_flight_station_stats(self._data_station_id,
             self._flight_id, successful_downloads, total_files)
 
-        logging.info("Download complete [%s% downloaded]" % percent_downloaded)
+        logging.info("Download complete [%s downloaded]" % percent_downloaded)
 
         # Close connection to data station
         logging.debug("Closing SFTP connection...")
