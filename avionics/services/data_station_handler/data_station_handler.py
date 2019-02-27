@@ -111,8 +111,9 @@ class DataStationHandler(object):
             redownload_request = self.db.get_redownload_request(data_station_id)
 
             download_worker = Download(data_station_id.strip()+'.local',
-                                       self.connection_timeout_millis,
-                                       redownload_request, self.flight_id)
+                                       redownload_request,
+                                       self.flight_id,
+                                       self.connection_timeout_millis)
 
             try:
                 # This throws an error if the connection times out
