@@ -81,13 +81,13 @@ class Download(threading.Thread):
         total_files = new_files_to_download+old_files_to_download
 
         # Avoid divide by zero error when no files exist
-        if total_files = 0:
+        if total_files == 0:
             percent_downloaded = 100
         else:
             percent_downloaded = int(successful_downloads/total_files)
 
         self.db.update_flight_station_stats(self._data_station_id,
-            self._flight_id, percent_downloaded, successful_downloads, total_files)
+            self._flight_id, successful_downloads, total_files)
 
         logging.info("Download complete [%s% downloaded]" % percent_downloaded)
 
