@@ -40,7 +40,7 @@ class SFTPClient(object):
 
         # Update destination directories to include hostname for data differentiation
         self.__hostname, self.__network_suffix = _hostname.split('.')
-        self.LOCAL_FIELD_DATA_DESTINATION = os.path.join(self.LOCAL_ROOT_DATA_DIRECTORY, _flight_id, self.__hostname)
+        self.LOCAL_FIELD_DATA_DESTINATION = os.path.join(self.LOCAL_ROOT_DATA_DIRECTORY, str(_flight_id), self.__hostname)
         # self.LOCAL_LOG_DESTINATION = '%s/%s/%s/' % (self.LOCAL_ROOT_DATA_DIRECTORY, _flight_id, self.__hostname)
 
         # TODO: change from password to public key cryptography
