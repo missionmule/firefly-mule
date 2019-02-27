@@ -82,7 +82,7 @@ class Database(object):
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
 
-        item = (flight_id, data_station_id,)
+        item = (int(flight_id), int(data_station_id),)
 
         c.execute('''INSERT INTO flights_stations (flight_id, station_id, successful_downloads, total_files)
                      VALUES (?, ?, 0, 0)''', item)
