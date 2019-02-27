@@ -42,7 +42,7 @@ class Database(object):
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
 
-        id = (data_station_id,)
+        id = (int(data_station_id),)
         c.execute('SELECT 1 FROM stations WHERE station_id=? LIMIT 1', id)
 
         if c.fetchone() is not None: # If the station already exists, just update timestamp
