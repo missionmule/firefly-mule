@@ -21,7 +21,7 @@ class DataStationHandler(object):
 
     XBee Wakeup:
         When the UAV arrives at a data station, the station is woken up with
-        an XBee RF signal including its data station ID ('redwood', 'streetcat', etc.)
+        an XBee RF signal including its data station ID ('123', '200', etc.)
 
     """
 
@@ -35,7 +35,7 @@ class DataStationHandler(object):
         self.xbee = XBee()
         self.db = Database()
         self._alive = True
-        self.flight_id = self.db.insert_new_flight()
+        self.flight_id = None # Will be created before the flight's first download
 
     def connect(self):
         self.xbee.connect()
@@ -63,6 +63,10 @@ class DataStationHandler(object):
         rx_lock.acquire()
         data_station_id = self.rx_queue.get().strip() # Removes invisible characters
         rx_lock.release()
+
+        # Only add a flight when a data station is actually downloaded
+        if self.flight_id == None:
+            self.flight_id = self.db.insert_new_flight()
 
         self.db.insert_data_station(data_station_id)
 

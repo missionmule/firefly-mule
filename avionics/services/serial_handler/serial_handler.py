@@ -65,7 +65,10 @@ class SerialHandler(object):
 
         logging.debug('Serial reader thread started')
         while self._alive:
-            self._read() # Pulled out to test
+            try:
+                self._read() # Pulled out to test
+            except:
+                pass
 
         self._alive = False
         logging.error('Serial reader thread terminated')
