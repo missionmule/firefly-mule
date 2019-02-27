@@ -79,7 +79,12 @@ class Download(threading.Thread):
         # Calculate percent of files downloaded and round down to the nearest integer
         successful_downloads = new_files_downloaded+old_files_downloaded
         total_files = new_files_to_download+old_files_to_download
-        percent_downloaded = int(successful_downloads/total_files)
+
+        # Avoid divide by zero error when no files exist
+        if total_files = 0:
+            percent_downloaded = 100
+        else:
+            percent_downloaded = int(successful_downloads/total_files)
 
         self.db.update_flight_station_stats(self._data_station_id,
             self._flight_id, percent_downloaded, successful_downloads, total_files)
