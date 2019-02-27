@@ -89,11 +89,11 @@ class SFTPClient(object):
                 logging.debug(
                     '{0} remote field data directory already exists'.format(self.REMOTE_FIELD_DATA_SOURCE))
 
-            # Ensure remote log directory exists
-            try:
-                self.__sftp.mkdir(self.REMOTE_LOG_SOURCE)
-            except IOError:
-                logging.debug('{0} remote log directory already exists'.format(self.REMOTE_LOG_SOURCE))
+            # # Ensure remote log directory exists
+            # try:
+            #     self.__sftp.mkdir(self.REMOTE_LOG_SOURCE)
+            # except IOError:
+            #     logging.debug('{0} remote log directory already exists'.format(self.REMOTE_LOG_SOURCE))
 
             # `os.makedirs()` recursively creates entire file path so ./data/ is created in the process of creating
             # local destination directory (./data/field/)
