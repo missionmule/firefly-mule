@@ -80,8 +80,8 @@ class Download(threading.Thread):
         #self._sftp.downloadAllLogData()
 
         # Calculate percent of files downloaded and round down to the nearest integer
-        successful_downloads = new_files_downloaded+old_files_downloaded
-        total_files = new_files_to_download+old_files_to_download
+        successful_downloads = new_files_downloaded + old_files_downloaded
+        total_files = new_files_to_download + old_files_to_download
 
         # Avoid divide by zero error when no files exist
         if total_files == 0:
@@ -96,6 +96,9 @@ class Download(threading.Thread):
 
         # self.db.update_flight_station_stats(self._data_station_id,
         #     self._flight_id, successful_downloads, total_files)
+
+        logging.debug("Total Files: %s" % total_files)
+        logging.debug("Successfully Downloaded: %s" % successful_downloads)
 
         logging.info("Download complete [%s downloaded]" % percent_downloaded)
 
