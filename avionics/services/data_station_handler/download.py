@@ -94,9 +94,6 @@ class Download(threading.Thread):
         self.successful_downloads = successful_downloads
         self.total_files = total_files
 
-        # self.db.update_flight_station_stats(self._data_station_id,
-        #     self._flight_id, successful_downloads, total_files)
-
         logging.debug("Total Files: %s" % total_files)
         logging.debug("Successfully Downloaded: %s" % successful_downloads)
 
