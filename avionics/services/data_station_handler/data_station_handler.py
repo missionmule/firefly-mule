@@ -123,6 +123,11 @@ class DataStationHandler(object):
                 # If still alive the download timed out.
                 download_worker.join(self.overall_timeout_millis/1000)
 
+                self.db.update_flight_station_stats(self.data_station_id,
+                    self.flight_id,
+                    download_worker.successful_downloads,
+                    download_worker.total_files)
+
                 if download_worker.is_alive():
                     logging.info("Download timeout: Download cancelled")
                 else:

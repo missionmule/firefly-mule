@@ -227,12 +227,12 @@ class SFTPClient(object):
                 # This is separate from the loop below to account for inaccurate
                 # counts as a result of a failed download or download timeout.
                 for file in files:
-                    if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
+                    if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
                         num_files_to_download+=1
 
                 # Download files
                 for file in files:
-                    if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
+                    if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
                         try:
                             self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
                             self.moveFileToTmp(path, file)
@@ -257,18 +257,18 @@ class SFTPClient(object):
 
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
 
-            # Loop through all files and count number to be downloaded
-            # This is separate from the loop below to account for inaccurate
-            # counts as a result of a failed download or download timeout.
-
             # Recurse into /media/ and download only `.tmp` directories
             if path.endswith('.tmp') or path.endswith('.tmp/'):
+                # Loop through all files and count number to be downloaded
+                # This is separate from the loop below to account for inaccurate
+                # counts as a result of a failed download or download timeout.
+
                 for file in files:
-                    if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
+                    if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
                         num_files_to_download+=1
 
                 for file in files:
-                    if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
+                    if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
                         try:
                             self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
                             num_files_downloaded+=1

@@ -18,6 +18,9 @@ class Download(threading.Thread):
 
         super(Download, self).__init__()
 
+        self.successful_downloads = 0
+        self.total_files = 0
+
         self._data_station_id = _data_station_id
         self._connection_timeout_millis = _connection_timeout_millis
         self._redownload_request = _redownload_request
@@ -86,8 +89,13 @@ class Download(threading.Thread):
         else:
             percent_downloaded = int(successful_downloads/total_files)
 
-        self.db.update_flight_station_stats(self._data_station_id,
-            self._flight_id, successful_downloads, total_files)
+        # SQLite behaves odly when its accessed in a multithreaded environment
+        # Instead, we perform the update from the central DataStationHandler
+        self.successful_downloads = successful_downloads
+        self.total_files = total_files
+
+        # self.db.update_flight_station_stats(self._data_station_id,
+        #     self._flight_id, successful_downloads, total_files)
 
         logging.info("Download complete [%s downloaded]" % percent_downloaded)
 
