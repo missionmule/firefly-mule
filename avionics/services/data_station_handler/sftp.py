@@ -7,21 +7,17 @@ import paramiko
 import os
 import binascii
 
-# TODO: handle poor connection timeouts
-# TODO: add robust logging for flight records
-# TODO: add certificate-based connection with certificate paired to camera-trap prior to deployment
-
 class SFTPClient(object):
 
     # Ensure pi users on payload and data station computers have r/w access to these directories
     REMOTE_ROOT_DATA_DIRECTORY = '/media/'
-    LOCAL_ROOT_DATA_DIRECTORY = '/srv/flight-data/'
+    LOCAL_ROOT_DATA_DIRECTORY = '/srv/'
 
     REMOTE_FIELD_DATA_SOURCE = REMOTE_ROOT_DATA_DIRECTORY + ''               # Location relative to SFTP root directory where the field data files are located; current SFTP root from pi@cameratrap.local /home/pi/
     LOCAL_FIELD_DATA_DESTINATION = LOCAL_ROOT_DATA_DIRECTORY + 'field/'      # Where downloaded data station field data will be kept
 
-    REMOTE_LOG_SOURCE = REMOTE_ROOT_DATA_DIRECTORY+'logs/'                   # Location relative to SFTP root directory where the data station log files are located
-    LOCAL_LOG_DESTINATION = LOCAL_ROOT_DATA_DIRECTORY + 'logs/'              # Where downloaded data station logs will be kept
+    # REMOTE_LOG_SOURCE = REMOTE_ROOT_DATA_DIRECTORY+'logs/'                   # Location relative to SFTP root directory where the data station log files are located
+    # LOCAL_LOG_DESTINATION = LOCAL_ROOT_DATA_DIRECTORY + 'logs/'              # Where downloaded data station logs will be kept
 
     # Paramiko client configuration
     PORT = 22
@@ -40,13 +36,12 @@ class SFTPClient(object):
 
     is_connected = False
 
-    def __init__(self, _username, _password, _hostname):
+    def __init__(self, _username, _password, _hostname, _flight_id):
 
         # Update destination directories to include hostname for data differentiation
         self.__hostname, self.__network_suffix = _hostname.split('.')
-        self.__download_id = binascii.b2a_hex(os.urandom(2)).decode()
-        self.LOCAL_FIELD_DATA_DESTINATION = '%s/%s-%s/' % (self.LOCAL_FIELD_DATA_DESTINATION, self.__hostname, self.__download_id)
-        self.LOCAL_LOG_DESTINATION = '%s/%s-%s/' % (self.LOCAL_LOG_DESTINATION, self.__hostname, self.__download_id)
+        self.LOCAL_FIELD_DATA_DESTINATION = os.path.join(self.LOCAL_ROOT_DATA_DIRECTORY, str(_flight_id), self.__hostname)
+        # self.LOCAL_LOG_DESTINATION = '%s/%s/%s/' % (self.LOCAL_ROOT_DATA_DIRECTORY, _flight_id, self.__hostname)
 
         # TODO: change from password to public key cryptography
         # Login credentials
@@ -54,9 +49,8 @@ class SFTPClient(object):
         self.__password = _password
         self.__hostname = _hostname
 
-        # This correlates to /home/pi/.ssh/known_hosts
         host_keys = paramiko.util.load_host_keys(os.path.expanduser('/home/pi/.ssh/known_hosts'))
-        logging.getLogger("paramiko").setLevel(logging.DEBUG)
+        logging.getLogger("paramiko").setLevel(logging.INFO)
 
         if self.__hostname in host_keys:
             self.__hostkeytype = host_keys[self.__hostname].keys()[0]
@@ -95,11 +89,11 @@ class SFTPClient(object):
                 logging.debug(
                     '{0} remote field data directory already exists'.format(self.REMOTE_FIELD_DATA_SOURCE))
 
-            # Ensure remote log directory exists
-            try:
-                self.__sftp.mkdir(self.REMOTE_LOG_SOURCE)
-            except IOError:
-                logging.debug('{0} remote log directory already exists'.format(self.REMOTE_LOG_SOURCE))
+            # # Ensure remote log directory exists
+            # try:
+            #     self.__sftp.mkdir(self.REMOTE_LOG_SOURCE)
+            # except IOError:
+            #     logging.debug('{0} remote log directory already exists'.format(self.REMOTE_LOG_SOURCE))
 
             # `os.makedirs()` recursively creates entire file path so ./data/ is created in the process of creating
             # local destination directory (./data/field/)
@@ -108,9 +102,9 @@ class SFTPClient(object):
             if not os.path.exists(self.LOCAL_FIELD_DATA_DESTINATION):
                 os.makedirs(self.LOCAL_FIELD_DATA_DESTINATION)
 
-            # Ensure local log data directory exists
-            if not os.path.exists(self.LOCAL_LOG_DESTINATION):
-                os.makedirs(self.LOCAL_LOG_DESTINATION)
+            # # Ensure local log data directory exists
+            # if not os.path.exists(self.LOCAL_LOG_DESTINATION):
+            #     os.makedirs(self.LOCAL_LOG_DESTINATION)
 
             self.is_connected = True
 
@@ -155,13 +149,30 @@ class SFTPClient(object):
         except socket.timeout:
             logging.error("Listing remote directories timeout")
 
+    def moveFileToTmp(self, remote_path, file_name):
+        """
+        Move file to /.tmp/ directory on sensor to await second pass deletion
+        """
+        logging.info("Moving to /.tmp/: %s" % (file_name))
+
+        # TODO: Eliminate the need for a .tmp directory creation with each move
+        # Make sure '.tmp' exists in current directory
+        try:
+            self.__sftp.mkdir(os.path.join(remote_path, '.tmp'))
+        except IOError:
+            logging.debug('{0} remote log directory already exists'.format(os.path.join(remote_path, '.tmp')))
+
+        oldpath = os.path.join(remote_path, file_name)
+        newpath = os.path.join(remote_path, '.tmp', file_name)
+        self.__sftp.rename(oldpath, newpath)
+
     def deleteFile(self, remote_path, file_name):
         """
         Delete file from given path on remote data station
         """
-        logging.info("Deleting file from camera trap: %s" % (file_name))
+        logging.info("Deleting file from camera trap: %s" % (os.path.join(remote_path,file_name)))
         try:
-            self.__sftp.remove(remote_path+file_name)
+            self.__sftp.remove(os.path.join(remote_path,file_name))
         except IOError as e:
             logging.error(e)
         except socket.timeout:
@@ -198,24 +209,85 @@ class SFTPClient(object):
                 yield x
 
     # TODO: ensure this handles files with same name in different directories
-    def downloadAllFieldData(self):
+    def downloadNewFieldData(self):
         """
         Download all data station field data
         Recurses from /media/ dir to download all data
+
+        Returns number of files to be downloaded as well as files successfully downloaded.
+        """
+
+        num_files_to_download = 0
+        num_files_downloaded = 0
+
+        for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
+            if not (path.endswith('.tmp') or path.endswith('.tmp/')):
+
+                # Loop through all files and count number to be downloaded
+                # This is separate from the loop below to account for inaccurate
+                # counts as a result of a failed download or download timeout.
+                for file in files:
+                    if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
+                        num_files_to_download+=1
+
+                # Download files
+                for file in files:
+                    if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
+                        try:
+                            self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
+                            self.moveFileToTmp(path, file)
+                            num_files_downloaded+=1
+                        except: # Don't move file to tmp if error is raised in download
+                            pass
+
+        return num_files_downloaded, num_files_to_download
+
+    def downloadTmpFieldData(self):
+        """
+        Download data from /.tmp/ directory on sensor
+        This method is called when the flight operator has requested a redownload
+        of previously downloaded data (which has since been moved to the /.tmp/
+        directory to await deletion on the second pass of the UAV).
+
+        Returns number of files to be downloaded as well as files successfully downloaded.
+        """
+
+        num_files_to_download = 0
+        num_files_downloaded = 0
+
+        for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
+
+            # Recurse into /media/ and download only `.tmp` directories
+            if path.endswith('.tmp') or path.endswith('.tmp/'):
+                # Loop through all files and count number to be downloaded
+                # This is separate from the loop below to account for inaccurate
+                # counts as a result of a failed download or download timeout.
+
+                for file in files:
+                    if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
+                        num_files_to_download+=1
+
+                for file in files:
+                    if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
+                        try:
+                            self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
+                            num_files_downloaded+=1
+                        except:
+                            pass
+
+        return num_files_downloaded, num_files_to_download
+
+    def deleteTmpFieldData(self):
+        """
+        Delete all data from /.tmp/ directory on sensor file system
+        This data was moved to the /.tmp/ directory following a successful
+        download and this method is called unless the flight operator has ordered
+        a redownload of previously downloaded data.
         """
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
-            for file in files:
-                if file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg'):
-                    self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
-
-    def deleteAllFieldData(self):
-        """
-        Delete all log data that has successfully been downloaded
-        """
-        # TODO: only delete files that 100% downloaded.
-        # If connection times out, some file names may exist, but the files are empty.
-
-        pass
+            if path.endswith('.tmp') or path.endswith('.tmp/'):
+                for file in files:
+                    self.deleteFile(path, file)
 
     # -----------------------
     # Log data methods

@@ -7,6 +7,7 @@ import threading
 from .timer import Timer
 from .download import Download
 from .xbee import XBee
+from .database import Database
 
 class DataStationHandler(object):
     """Communication handler for data stations (XBee station wakeup and SFTP download)
@@ -20,7 +21,7 @@ class DataStationHandler(object):
 
     XBee Wakeup:
         When the UAV arrives at a data station, the station is woken up with
-        an XBee RF signal including its data station ID ('redwood', 'streetcat', etc.)
+        an XBee RF signal including its data station ID ('123', '200', etc.)
 
     """
 
@@ -32,7 +33,9 @@ class DataStationHandler(object):
         self.overall_timeout_millis = _overall_timeout_millis
         self.rx_queue = _rx_queue
         self.xbee = XBee()
+        self.db = Database()
         self._alive = True
+        self.flight_id = None # Will be created before the flight's first download
 
     def connect(self):
         self.xbee.connect()
@@ -60,6 +63,17 @@ class DataStationHandler(object):
         rx_lock.acquire()
         data_station_id = self.rx_queue.get().strip() # Removes invisible characters
         rx_lock.release()
+
+        # Only add a flight when a data station is actually downloaded
+        if self.flight_id == None:
+            self.flight_id = self.db.insert_new_flight()
+
+        self.db.insert_data_station(data_station_id)
+
+        self.db.add_station_to_flight(data_station_id, self.flight_id)
+
+        # Add the station to flights_stations table to pair with flight with percent 0.
+        self._redownload_request = False # [ get redownload status from database for this ID ]
 
         logging.info('Data station arrival: %s', data_station_id)
 
@@ -94,7 +108,11 @@ class DataStationHandler(object):
 
             logging.info('XBee ACK received, beginning download...')
 
+            redownload_request = self.db.get_redownload_request(data_station_id)
+
             download_worker = Download(data_station_id.strip()+'.local',
+                                       redownload_request,
+                                       self.flight_id,
                                        self.connection_timeout_millis)
 
             try:
@@ -104,6 +122,11 @@ class DataStationHandler(object):
                 # Attempt to join the thread after timeout.
                 # If still alive the download timed out.
                 download_worker.join(self.overall_timeout_millis/1000)
+
+                self.db.update_flight_station_stats(self.data_station_id,
+                    self.flight_id,
+                    download_worker.successful_downloads,
+                    download_worker.total_files)
 
                 if download_worker.is_alive():
                     logging.info("Download timeout: Download cancelled")

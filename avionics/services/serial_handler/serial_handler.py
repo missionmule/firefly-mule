@@ -84,7 +84,6 @@ class SerialHandler(object):
                 self.rx_lock.release()
         except:
             logging.error('Serial read failure') # Probably get disconnected
-            self._alive = False
 
     def writer(self):
         """Loop forever and write messages from TX queue"""
