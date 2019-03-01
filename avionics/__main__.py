@@ -25,7 +25,7 @@ def setup_logging():
     else:
         logging_level = logging.INFO
 
-    logging.basicConfig(filename='flight.log',
+    logging.basicConfig(filename='/var/log/mission-mule-flight.log',
                         level=logging_level,
                         format='%(asctime)s.%(msecs)03d %(levelname)s \t%(message)s',
                         datefmt="%d %b %Y %H:%M:%S")
