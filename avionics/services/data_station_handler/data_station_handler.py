@@ -87,7 +87,7 @@ class DataStationHandler(object):
             while not self.xbee.acknowledge(data_station_id, 'POWER_ON'):
                 logging.debug("POWER_ON data station %s", data_station_id)
                 self.xbee.send_command(data_station_id, 'POWER_ON')
-                time.sleep(3) # Try again in 3s
+                time.sleep(1) # Try again in 1.5s --> this gives 2-3 attempts in 5s listening window
 
                 # Will try shutting down data station over XBee for 2 min before moving on
                 if xbee_wake_command_timer.time_elapsed() > 120:

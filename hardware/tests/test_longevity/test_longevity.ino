@@ -1,3 +1,4 @@
+
 #include <SoftwareSerial.h>
 
 SoftwareSerial raspi(10, 9); // RX, TX
@@ -16,7 +17,7 @@ int testRound = 0;
 char heartbeatOne = 100;
 bool heartbeatReceived = true;
 
-String dataStationID[6] = {"001","106","100","001","106","100"};
+String dataStationID[6] = {"001","106","119","001","001","001"};
 
 void setup() {
 
