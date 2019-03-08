@@ -238,7 +238,7 @@ class SFTPClient(object):
                         not (file.endswith('/') or file.endswith('usb0') or file.endswith('usb1')
                         or file.endswith('usb2') or file.endswith('usb3') or file.endswith('usb4')
                         or file.endswith('usb5')  or file.endswith('usb6') or file.endswith('usb7')
-                        or file.endswith('logs')) and not did_find_device
+                        or file.endswith('logs') or file == 'usb') and not did_find_device
                       ):
                         did_find_device = True
 
