@@ -56,6 +56,7 @@ class DataStationHandler(object):
         self._alive = False
 
     def _wake_download_and_sleep(self, rx_lock, is_downloading):
+
         # Update system status (used by heartbeat)
         is_downloading.set()
 
@@ -123,10 +124,10 @@ class DataStationHandler(object):
                 # If still alive the download timed out.
                 download_worker.join(self.overall_timeout_millis/1000)
 
-                self.db.update_flight_station_stats(data_station_id,
-                    self.flight_id,
-                    download_worker.successful_downloads,
-                    download_worker.total_files)
+                # self.db.update_flight_station_stats(data_station_id,
+                #     self.flight_id,
+                #     download_worker.successful_downloads,
+                #     download_worker.total_files,)
 
                 if download_worker.is_alive():
                     logging.info("Download timeout: Download cancelled")
@@ -141,6 +142,7 @@ class DataStationHandler(object):
         self.xbee.send_command(data_station_id, 'POWER_OFF')
 
         xbee_sleep_command_timer = Timer()
+        shutdown_successful = True
         # If the data station actually turned on and we're not in test mode, shut it down
         if not (os.getenv('TESTING') == 'True') and (wakeup_successful == True):
             while not self.xbee.acknowledge(data_station_id, 'POWER_OFF'):
@@ -151,8 +153,17 @@ class DataStationHandler(object):
                 # Will try shutting down data station over XBee for 60 seconds before moving on
                 if xbee_sleep_command_timer.time_elapsed() > 60:
                     logging.error("POWER_OFF command ACK failure. Moving on...")
+                    did_shutdown_ack = False
                     break
 
+        self.db.update_flight_station_stats(data_station_id,
+            self.flight_id,
+            download_worker.successful_downloads,
+            download_worker.total_files,
+            wakeup_successful,
+            download_worker.did_connect,
+            downloads_worker.did_find_device,
+            shutdown_successful)
         # Mark task as complete, even if it fails
         self.rx_queue.task_done()
 

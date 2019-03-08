@@ -20,6 +20,8 @@ class Download(threading.Thread):
 
         self.successful_downloads = 0
         self.total_files = 0
+        self.did_connect = False
+        self.did_find_device = False
 
         self._data_station_id = _data_station_id
         self._connection_timeout_millis = _connection_timeout_millis
@@ -50,6 +52,8 @@ class Download(threading.Thread):
         # Throw an error to tell navigation to continue on
         if not self._sftp.is_connected:
             raise Exception("Connection Timeout")
+        else:
+            self.did_connect = True
 
 
     def _start(self):
@@ -76,7 +80,7 @@ class Download(threading.Thread):
             self._sftp.deleteTmpFieldData()
 
         # Prioritizes field data transfer over log data
-        new_files_downloaded, new_files_to_download = self._sftp.downloadNewFieldData()
+        new_files_downloaded, new_files_to_download, self.did_find_device = self._sftp.downloadNewFieldData()
         #self._sftp.downloadAllLogData()
 
         # Calculate percent of files downloaded and round down to the nearest integer

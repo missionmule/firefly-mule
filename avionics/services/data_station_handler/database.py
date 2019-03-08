@@ -27,7 +27,7 @@ class Database(object):
                      stations(station_id INTEGER PRIMARY KEY, last_visited DATETIME, redownload INTEGER)''')
 
         c.execute('''CREATE TABLE IF NOT EXISTS
-                     flights_stations(flight_id INTEGER, station_id INTEGER, successful_downloads INTEGER, total_files INTEGER)''')
+                     flights_stations(flight_id INTEGER, station_id INTEGER, successful_downloads INTEGER, total_files INTEGER, did_wake_up_ack INTEGER, did_connect INTEGER, did_find_device INTEGER, did_shutdown_ack INTEGER)''')
 
         conn.commit()
         conn.close()
@@ -84,22 +84,22 @@ class Database(object):
 
         item = (int(flight_id), int(data_station_id),)
 
-        c.execute('''INSERT INTO flights_stations (flight_id, station_id, successful_downloads, total_files)
-                     VALUES (?, ?, 0, 0)''', item)
+        c.execute('''INSERT INTO flights_stations (flight_id, station_id, successful_downloads, total_files, did_wake_up_ack, did_connect, did_find_device, did_shutdown_ack)
+                     VALUES (?, ?, 0, 0, 0, 0, 0, 0)''', item)
 
         conn.commit()
         conn.close()
 
-    def update_flight_station_stats(self, data_station_id, flight_id, successful_downloads, total_files):
+    def update_flight_station_stats(self, data_station_id, flight_id, successful_downloads, total_files, did_wake_up_ack, did_connect, did_find_device, did_shutdown_ack):
         """Updates the percent of data downloaded for a specific data station"""
 
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
 
-        item = (successful_downloads, total_files, data_station_id, flight_id, )
+        item = (successful_downloads, total_files, did_wake_up_ack, did_connect, did_find_device, did_shutdown_ack, data_station_id, flight_id, )
 
         c.execute('''UPDATE flights_stations
-                     SET successful_downloads=?, total_files=?
+                     SET successful_downloads=?, total_files=?, did_wake_up_ack=?, did_connect=?, did_find_device=?, did_shutdown_ack=?
                      WHERE (station_id=? AND flight_id=?)''', item)
 
         conn.commit()

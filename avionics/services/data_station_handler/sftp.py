@@ -219,6 +219,7 @@ class SFTPClient(object):
 
         num_files_to_download = 0
         num_files_downloaded = 0
+        did_find_device = False # A hacky test for the exitence of any file other than `/media/usb*/`
 
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
             if not (path.endswith('.tmp') or path.endswith('.tmp/')):
@@ -229,6 +230,10 @@ class SFTPClient(object):
                 for file in files:
                     if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
                         num_files_to_download+=1
+                    # Search for any file (other than '/media/usb*/') to signal that *something* is there
+                    # Also, we only need a single case to verify that it works
+                    if (not file.endswith('/') and not did_find_device): # TODO: this needs to be tested to see if it actually works
+                        did_find_device = True
 
                 # Download files
                 for file in files:
@@ -240,7 +245,7 @@ class SFTPClient(object):
                         except: # Don't move file to tmp if error is raised in download
                             pass
 
-        return num_files_downloaded, num_files_to_download
+        return num_files_downloaded, num_files_to_download, did_find_device
 
     def downloadTmpFieldData(self):
         """
