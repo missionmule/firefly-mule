@@ -96,6 +96,11 @@ class DataStationHandler(object):
                     logging.error("POWER_ON command ACK failure. Moving on...")
                     break
 
+        did_connect = False
+        did_find_device = False
+        total_files = 0
+        successful_downloads = 0
+
         # Don't actually download
         if (os.getenv('TESTING') == 'True'):
             r = random.randint(10,20)
@@ -124,10 +129,10 @@ class DataStationHandler(object):
                 # If still alive the download timed out.
                 download_worker.join(self.overall_timeout_millis/1000)
 
-                # self.db.update_flight_station_stats(data_station_id,
-                #     self.flight_id,
-                #     download_worker.successful_downloads,
-                #     download_worker.total_files,)
+                did_connect = download_worker.did_connect
+                did_find_device = download_worker.did_find_device
+                successful_downloads = download_worker.successful_downloads
+                total_files = download_worker.total_files
 
                 if download_worker.is_alive():
                     logging.info("Download timeout: Download cancelled")
@@ -161,8 +166,8 @@ class DataStationHandler(object):
             download_worker.successful_downloads,
             download_worker.total_files,
             wakeup_successful,
-            download_worker.did_connect,
-            downloads_worker.did_find_device,
+            did_connect,
+            did_find_device,
             shutdown_successful)
         # Mark task as complete, even if it fails
         self.rx_queue.task_done()
