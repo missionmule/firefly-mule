@@ -163,8 +163,8 @@ class DataStationHandler(object):
 
         self.db.update_flight_station_stats(data_station_id,
             self.flight_id,
-            download_worker.successful_downloads,
-            download_worker.total_files,
+            successful_downloads,
+            total_files,
             wakeup_successful,
             did_connect,
             did_find_device,
