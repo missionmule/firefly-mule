@@ -232,7 +232,14 @@ class SFTPClient(object):
                         num_files_to_download+=1
                     # Search for any file (other than '/media/usb*/') to signal that *something* is there
                     # Also, we only need a single case to verify that it works
-                    if (not file.endswith('/') and not did_find_device): # TODO: this needs to be tested to see if it actually works
+
+                    # This is ugly, but it catches what SFTP returns when no data is available
+                    if (
+                        not (file.endswith('/') or file.endswith('usb0') or file.endswith('usb1')
+                        or file.endswith('usb2') or file.endswith('usb3') or file.endswith('usb4')
+                        or file.endswith('usb5')  or file.endswith('usb6') or file.endswith('usb7')
+                        or file.endswith('logs')) and not did_find_device
+                      ):
                         did_find_device = True
 
                 # Download files

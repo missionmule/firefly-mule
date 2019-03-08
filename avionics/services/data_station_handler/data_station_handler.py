@@ -150,7 +150,7 @@ class DataStationHandler(object):
         shutdown_successful = True
 
         # Edge case where no wakeup happened, we don't want shutdown to be shown as successful
-        if (wakeup_successful == False) shutdown_successful = False
+        if (wakeup_successful == False): shutdown_successful = False
 
         # If the data station actually turned on and we're not in test mode, shut it down
         if not (os.getenv('TESTING') == 'True') and (wakeup_successful == True):
@@ -162,7 +162,7 @@ class DataStationHandler(object):
                 # Will try shutting down data station over XBee for 60 seconds before moving on
                 if xbee_sleep_command_timer.time_elapsed() > 60:
                     logging.error("POWER_OFF command ACK failure. Moving on...")
-                    did_shutdown_ack = False
+                    shutdown_successful = False
                     break
 
         self.db.update_flight_station_stats(data_station_id,
