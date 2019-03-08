@@ -148,6 +148,10 @@ class DataStationHandler(object):
 
         xbee_sleep_command_timer = Timer()
         shutdown_successful = True
+
+        # Edge case where no wakeup happened, we don't want shutdown to be shown as successful
+        if (wakeup_successful == False) shutdown_successful = False
+
         # If the data station actually turned on and we're not in test mode, shut it down
         if not (os.getenv('TESTING') == 'True') and (wakeup_successful == True):
             while not self.xbee.acknowledge(data_station_id, 'POWER_OFF'):
