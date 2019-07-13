@@ -84,14 +84,19 @@ class DataStationHandler(object):
 
         xbee_wake_command_timer = Timer()
         wakeup_successful = True
+        wakeup_time_s = 0
+
+        wakeup_timeout_s = self.db.get_timeout('wakeup')
+
         if not (os.getenv('TESTING') == 'True'):
             while not self.xbee.acknowledge(data_station_id, 'POWER_ON'):
+                wakeup_time_s = xbee_wake_command_timer.time_elapsed()
                 logging.debug("POWER_ON data station %s", data_station_id)
                 self.xbee.send_command(data_station_id, 'POWER_ON')
                 time.sleep(1) # Try again in 1.5s --> this gives 2-3 attempts in 5s listening window
 
                 # Will try shutting down data station over XBee for 2 min before moving on
-                if xbee_wake_command_timer.time_elapsed() > 120:
+                if xbee_wake_command_timer.time_elapsed() > wakeup_time_s:
                     wakeup_successful = False
                     logging.error("POWER_ON command ACK failure. Moving on...")
                     break
@@ -127,12 +132,17 @@ class DataStationHandler(object):
 
                 # Attempt to join the thread after timeout.
                 # If still alive the download timed out.
-                download_worker.join(self.overall_timeout_millis/1000)
+                download_timeout_s = self.db.get_timeout('download')
+                download_worker.join(download_timeout_s)
 
                 did_connect = download_worker.did_connect
                 did_find_device = download_worker.did_find_device
                 successful_downloads = download_worker.successful_downloads
                 total_files = download_worker.total_files
+                download_speed_mbps = worker.download_speed_mbps
+                total_data_downloaded_mb = worker.total_data_downloaded_mb
+                connection_time_s = worker.connection_time_s
+                download_time_s = worker.download_time_s
 
                 if download_worker.is_alive():
                     logging.info("Download timeout: Download cancelled")
@@ -152,15 +162,18 @@ class DataStationHandler(object):
         # Edge case where no wakeup happened, we don't want shutdown to be shown as successful
         if (wakeup_successful == False): shutdown_successful = False
 
+        shutdown_time_s = 0
+        shutdown_timeout_s = self.db.get_timeout('shutdown')
         # If the data station actually turned on and we're not in test mode, shut it down
         if not (os.getenv('TESTING') == 'True') and (wakeup_successful == True):
             while not self.xbee.acknowledge(data_station_id, 'POWER_OFF'):
+                shutdown_time_s = xbee_wake_command_timer.time_elapsed()
                 logging.debug("POWER_OFF data station %s", data_station_id)
                 self.xbee.send_command(data_station_id, 'POWER_OFF')
                 time.sleep(0.5) # Try again in 0.5s
 
                 # Will try shutting down data station over XBee for 60 seconds before moving on
-                if xbee_sleep_command_timer.time_elapsed() > 60:
+                if xbee_sleep_command_timer.time_elapsed() > shutdown_time_s:
                     logging.error("POWER_OFF command ACK failure. Moving on...")
                     shutdown_successful = False
                     break
@@ -172,7 +185,13 @@ class DataStationHandler(object):
             wakeup_successful,
             did_connect,
             did_find_device,
-            shutdown_successful)
+            shutdown_successful,
+            total_data_downloaded_mb, <-- done
+            download_speed_mbps,
+            wakeup_time_s, <-- done
+            connection_time_s, <--done
+            download_time_s, <--done
+            shutdown_time_s <--done)
         # Mark task as complete, even if it fails
         self.rx_queue.task_done()
 

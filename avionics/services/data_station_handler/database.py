@@ -27,7 +27,10 @@ class Database(object):
                      stations(station_id INTEGER PRIMARY KEY, last_visited DATETIME, redownload INTEGER)''')
 
         c.execute('''CREATE TABLE IF NOT EXISTS
-                     flights_stations(flight_id INTEGER, station_id INTEGER, successful_downloads INTEGER, total_files INTEGER, did_wake_up_ack INTEGER, did_connect INTEGER, did_find_device INTEGER, did_shutdown_ack INTEGER)''')
+                     flights_stations(flight_id INTEGER, station_id INTEGER, successful_downloads INTEGER, total_files INTEGER, total_data_downloaded_mb FLOAT, download_speed_mbps FLOAT, did_wake_up_ack INTEGER, did_connect INTEGER, did_find_device INTEGER, did_shutdown_ack INTEGER, wakeup_time_s INTEGER, connection_time_s INTEGER, download_time_s INTEGER, shutdown_time_s INTEGER)''')
+
+        c.execute('''CREATE TABLE IF NOT EXISTS timeouts(timeout_id TEXT PRIMARY KEY, time_in_min INTEGER)''')
+        c.execute('''INSERT OR IGNORE INTO timeouts (timeout_id, time_in_min) VALUES ('wakeup', 4), ('connection', 4), ('download', 10), ('shutdown', 2)''')
 
         conn.commit()
         conn.close()
@@ -84,29 +87,29 @@ class Database(object):
 
         item = (int(flight_id), int(data_station_id),)
 
-        c.execute('''INSERT INTO flights_stations (flight_id, station_id, successful_downloads, total_files, did_wake_up_ack, did_connect, did_find_device, did_shutdown_ack)
-                     VALUES (?, ?, 0, 0, 0, 0, 0, 0)''', item)
+        c.execute('''INSERT INTO flights_stations (flight_id, station_id, successful_downloads, total_files, did_wake_up_ack, did_connect, did_find_device, did_shutdown_ack, total_data_downloaded_mb=?, download_speed_mbps=?, wakeup_time_s=?, connection_time_s=?, download_time_s=?, shutdown_time_s=?)
+                     VALUES (?, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)''', item)
 
         conn.commit()
         conn.close()
 
-    def update_flight_station_stats(self, data_station_id, flight_id, successful_downloads, total_files, did_wake_up_ack, did_connect, did_find_device, did_shutdown_ack):
+    def update_flight_station_stats(self, data_station_id, flight_id, successful_downloads, total_files, did_wake_up_ack, did_connect, did_find_device, did_shutdown_ack, total_data_downloaded_mb, download_speed_mbps, wakeup_time_s, connection_time_s, download_time_s, shutdown_time_s):
         """Updates the percent of data downloaded for a specific data station"""
 
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
 
-        item = (successful_downloads, total_files, did_wake_up_ack, did_connect, did_find_device, did_shutdown_ack, data_station_id, flight_id, )
+        item = (successful_downloads, total_files, did_wake_up_ack, did_connect, did_find_device, did_shutdown_ack, total_data_downloaded_mb, download_speed_mbps, wakeup_time_s, connection_time_s, download_time_s, shutdown_time_s, data_station_id, flight_id, )
 
         c.execute('''UPDATE flights_stations
-                     SET successful_downloads=?, total_files=?, did_wake_up_ack=?, did_connect=?, did_find_device=?, did_shutdown_ack=?
+                     SET successful_downloads=?, total_files=?, did_wake_up_ack=?, did_connect=?, did_find_device=?, did_shutdown_ack=?, total_data_downloaded_mb=?, download_speed_mbps=?, wakeup_time_s=?, connection_time_s=?, download_time_s=?, shutdown_time_s=?
                      WHERE (station_id=? AND flight_id=?)''', item)
 
         conn.commit()
         conn.close()
 
     def get_redownload_request(self, data_station_id):
-        """Returns data station redownload request bolean for specific data station"""
+        """Returns data station redownload request boolean for specific data station"""
 
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
@@ -125,3 +128,17 @@ class Database(object):
         conn.close()
 
         return redownload
+
+    def get_timeout(self, timeout_id):
+        """Returns wakeup timeout"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        item = (timeout_id,)
+
+        c.execute('''SELECT time_in_min
+                     FROM timeouts
+                     WHERE timeout_id=?''', item)
+
+        timeout_in_min = int(c.fetchone()[0])
+
+        return time_in_min

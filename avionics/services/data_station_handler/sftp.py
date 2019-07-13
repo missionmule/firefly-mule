@@ -219,6 +219,7 @@ class SFTPClient(object):
 
         num_files_to_download = 0
         num_files_downloaded = 0
+        new_data_downloaded_mb = 0
         did_find_device = False # A hacky test for the exitence of any file other than `/media/usb*/`
 
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
@@ -247,12 +248,13 @@ class SFTPClient(object):
                     if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
                         try:
                             self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
+                            new_data_downloaded_mb+=os.path.getsize(os.path.join(self.LOCAL_FIELD_DATA_DESTINATION, file)) >> 20 # get size and conver to megabytes
                             self.moveFileToTmp(path, file)
                             num_files_downloaded+=1
                         except: # Don't move file to tmp if error is raised in download
                             pass
 
-        return num_files_downloaded, num_files_to_download, did_find_device
+        return num_files_downloaded, num_files_to_download, did_find_device, new_data_downloaded_mb
 
     def downloadTmpFieldData(self):
         """
@@ -266,6 +268,7 @@ class SFTPClient(object):
 
         num_files_to_download = 0
         num_files_downloaded = 0
+        old_data_downloaded_mb = 0
 
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
 
@@ -283,11 +286,12 @@ class SFTPClient(object):
                     if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
                         try:
                             self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
+                            old_data_downloaded_mb+=os.path.getsize(os.path.join(self.LOCAL_FIELD_DATA_DESTINATION, file)) >> 20 # get size and conver to megabytes
                             num_files_downloaded+=1
                         except:
                             pass
 
-        return num_files_downloaded, num_files_to_download
+        return num_files_downloaded, num_files_to_download, old_data_downloaded_mb
 
     def deleteTmpFieldData(self):
         """
