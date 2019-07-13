@@ -42,7 +42,7 @@ class Download(threading.Thread):
         data_station_connection_timer = Timer()
         while not self._sftp.is_connected:
 
-            connection_timeout_s = self.db.get_timeout('connection')
+            connection_timeout_s = self.db.get_timeout('connection')*60
 
             self.connection_time_s = data_station_connection_timer.time_elapsed()
 

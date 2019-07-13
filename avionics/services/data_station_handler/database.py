@@ -139,6 +139,6 @@ class Database(object):
                      FROM timeouts
                      WHERE timeout_id=?''', item)
 
-        timeout_in_min = int(c.fetchone()[0])
+        time_in_min = int(c.fetchone()[0])
 
         return time_in_min
