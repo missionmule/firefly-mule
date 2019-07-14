@@ -87,7 +87,7 @@ class Database(object):
 
         item = (int(flight_id), int(data_station_id),)
 
-        c.execute('''INSERT INTO flights_stations (flight_id, station_id, successful_downloads, total_files, did_wake_up_ack, did_connect, did_find_device, did_shutdown_ack, total_data_downloaded_mb=?, download_speed_mbps=?, wakeup_time_s=?, connection_time_s=?, download_time_s=?, shutdown_time_s=?)
+        c.execute('''INSERT INTO flights_stations (flight_id, station_id, successful_downloads, total_files, did_wake_up_ack, did_connect, did_find_device, did_shutdown_ack, total_data_downloaded_mb, download_speed_mbps, wakeup_time_s, connection_time_s, download_time_s, shutdown_time_s)
                      VALUES (?, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)''', item)
 
         conn.commit()
