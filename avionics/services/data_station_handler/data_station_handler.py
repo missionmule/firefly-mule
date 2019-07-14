@@ -145,10 +145,10 @@ class DataStationHandler(object):
                 did_find_device = download_worker.did_find_device
                 successful_downloads = download_worker.successful_downloads
                 total_files = download_worker.total_files
-                download_speed_mbps = worker.download_speed_mbps
-                total_data_downloaded_mb = worker.total_data_downloaded_mb
-                connection_time_s = worker.connection_time_s
-                download_time_s = worker.download_time_s
+                download_speed_mbps = download_worker.download_speed_mbps
+                total_data_downloaded_mb = download_worker.total_data_downloaded_mb
+                connection_time_s = download_worker.connection_time_s
+                download_time_s = download_worker.download_time_s
 
                 if download_worker.is_alive():
                     logging.info("Download timeout: Download cancelled")
