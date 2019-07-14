@@ -84,7 +84,6 @@ class DataStationHandler(object):
 
         xbee_wake_command_timer = Timer()
         wakeup_successful = True
-        wakeup_time_s = 0
 
         wakeup_timeout_s = self.db.get_timeout('wakeup')*60
         logging.debug("Wakeup timeout: %s", wakeup_time_s)
@@ -97,7 +96,7 @@ class DataStationHandler(object):
                 time.sleep(1) # Try again in 1.5s --> this gives 2-3 attempts in 5s listening window
 
                 # Will try shutting down data station over XBee for 2 min before moving on
-                if xbee_wake_command_timer.time_elapsed() > wakeup_time_s:
+                if xbee_wake_command_timer.time_elapsed() > wakeup_timeout_s:
                     wakeup_successful = False
                     logging.error("POWER_ON command ACK failure. Moving on...")
                     break
@@ -167,7 +166,6 @@ class DataStationHandler(object):
         # Edge case where no wakeup happened, we don't want shutdown to be shown as successful
         if (wakeup_successful == False): shutdown_successful = False
 
-        shutdown_time_s = 0
         shutdown_timeout_s = self.db.get_timeout('shutdown')*60
         # If the data station actually turned on and we're not in test mode, shut it down
         if not (os.getenv('TESTING') == 'True') and (wakeup_successful == True):
@@ -178,7 +176,7 @@ class DataStationHandler(object):
                 time.sleep(0.5) # Try again in 0.5s
 
                 # Will try shutting down data station over XBee for 60 seconds before moving on
-                if xbee_sleep_command_timer.time_elapsed() > shutdown_time_s:
+                if xbee_sleep_command_timer.time_elapsed() > shutdown_timeout_s:
                     logging.error("POWER_OFF command ACK failure. Moving on...")
                     shutdown_successful = False
                     break
