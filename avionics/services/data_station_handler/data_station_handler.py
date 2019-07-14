@@ -105,6 +105,7 @@ class DataStationHandler(object):
         did_find_device = False
         total_files = 0
         successful_downloads = 0
+        download_speed_mbps = 0
         total_data_downloaded_mb = 0
         connection_time_s = 0
         download_time_s = 0
