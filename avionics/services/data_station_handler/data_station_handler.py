@@ -86,7 +86,7 @@ class DataStationHandler(object):
         wakeup_successful = True
 
         wakeup_timeout_s = self.db.get_timeout('wakeup')*60
-        logging.debug("Wakeup timeout: %s", wakeup_time_s)
+        logging.debug("Wakeup timeout: %s s", wakeup_timeout_s)
 
         if not (os.getenv('TESTING') == 'True'):
             while not self.xbee.acknowledge(data_station_id, 'POWER_ON'):
@@ -137,6 +137,8 @@ class DataStationHandler(object):
                 # Attempt to join the thread after timeout.
                 # If still alive the download timed out.
                 download_timeout_s = self.db.get_timeout('download')*60
+                logging.debug("Download timeout: %s s", download_timeout_s)
+
                 download_worker.join(download_timeout_s)
 
                 did_connect = download_worker.did_connect
@@ -167,6 +169,8 @@ class DataStationHandler(object):
         if (wakeup_successful == False): shutdown_successful = False
 
         shutdown_timeout_s = self.db.get_timeout('shutdown')*60
+        logging.debug("Shutdown timeout: %s s", wakeup_timeout_s)
+
         # If the data station actually turned on and we're not in test mode, shut it down
         if not (os.getenv('TESTING') == 'True') and (wakeup_successful == True):
             while not self.xbee.acknowledge(data_station_id, 'POWER_OFF'):
