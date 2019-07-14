@@ -58,6 +58,8 @@ class Download(threading.Thread):
             # but not yet accepting SSH connections
             time.sleep(0.5)
 
+        logging.debug("Total connection time: %s", self.connection_time_s)
+
         # Throw an error to tell navigation to continue on
         if not self._sftp.is_connected:
             raise Exception("Connection Timeout")

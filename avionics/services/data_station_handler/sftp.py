@@ -248,7 +248,8 @@ class SFTPClient(object):
                     if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
                         try:
                             self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
-                            new_data_downloaded_mb+=os.path.getsize(os.path.join(self.LOCAL_FIELD_DATA_DESTINATION, file)) >> 20 # get size and conver to megabytes
+                            new_data_downloaded_mb+=os.path.getsize(os.path.join(self.LOCAL_FIELD_DATA_DESTINATION, file)) / 1024 / 1024 # get size and conver to megabytes
+                            logging.debug("new_data: %s", new_data_downloaded_mb)
                             self.moveFileToTmp(path, file)
                             num_files_downloaded+=1
                         except: # Don't move file to tmp if error is raised in download
@@ -286,7 +287,8 @@ class SFTPClient(object):
                     if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
                         try:
                             self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
-                            old_data_downloaded_mb+=os.path.getsize(os.path.join(self.LOCAL_FIELD_DATA_DESTINATION, file)) >> 20 # get size and conver to megabytes
+                            old_data_downloaded_mb+=os.path.getsize(os.path.join(self.LOCAL_FIELD_DATA_DESTINATION, file)) / 1024 / 1024 # get size and conver to megabytes
+                            logging.debug("old_data: %s", old_data_downloaded_mb)
                             num_files_downloaded+=1
                         except:
                             pass

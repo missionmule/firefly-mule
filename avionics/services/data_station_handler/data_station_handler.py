@@ -101,6 +101,8 @@ class DataStationHandler(object):
                     logging.error("POWER_ON command ACK failure. Moving on...")
                     break
 
+        logging.debug("Total wakeup time: %s", wakeup_time_s)
+
         did_connect = False
         did_find_device = False
         total_files = 0
@@ -155,6 +157,8 @@ class DataStationHandler(object):
                 else:
                     logging.info("Download complete")
 
+                logging.debug("Total download time: %s", download_time_s)
+
             except Exception as e:
                 logging.error(e)
 
@@ -184,6 +188,8 @@ class DataStationHandler(object):
                     logging.error("POWER_OFF command ACK failure. Moving on...")
                     shutdown_successful = False
                     break
+
+        logging.debug("Total shutdown time: %s", shutdown_time_s)
 
         self.db.update_flight_station_stats(data_station_id,
             self.flight_id,
