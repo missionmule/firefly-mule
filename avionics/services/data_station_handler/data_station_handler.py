@@ -186,12 +186,12 @@ class DataStationHandler(object):
             did_connect,
             did_find_device,
             shutdown_successful,
-            total_data_downloaded_mb, <-- done
+            total_data_downloaded_mb,
             download_speed_mbps,
-            wakeup_time_s, <-- done
-            connection_time_s, <--done
-            download_time_s, <--done
-            shutdown_time_s <--done)
+            wakeup_time_s,
+            connection_time_s,
+            download_time_s,
+            shutdown_time_s)
         # Mark task as complete, even if it fails
         self.rx_queue.task_done()
 
