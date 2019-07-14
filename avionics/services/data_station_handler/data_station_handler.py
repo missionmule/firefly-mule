@@ -87,6 +87,7 @@ class DataStationHandler(object):
         wakeup_time_s = 0
 
         wakeup_timeout_s = self.db.get_timeout('wakeup')*60
+        logging.debug("Wakeup timeout: %s", wakeup_time_s)
 
         if not (os.getenv('TESTING') == 'True'):
             while not self.xbee.acknowledge(data_station_id, 'POWER_ON'):
