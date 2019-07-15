@@ -126,11 +126,15 @@ class DataStationHandler(object):
             logging.info('XBee ACK received, beginning download...')
 
             redownload_request = self.db.get_redownload_request(data_station_id)
+            timeout_event = threading.Event()
+
+            connection_timeout_s = self.db.get_timeout('connection')*60
 
             download_worker = Download(data_station_id.strip()+'.local',
                                        redownload_request,
                                        self.flight_id,
-                                       self.connection_timeout_millis)
+                                       connection_timeout_s,
+                                       timeout_event)
 
             try:
                 # This throws an error if the connection times out
@@ -142,6 +146,12 @@ class DataStationHandler(object):
                 logging.debug("Download timeout: %s s", download_timeout_s)
 
                 download_worker.join(download_timeout_s)
+
+                timeout_event.set()
+
+                # Waits (at most 10s) for download_worker to unset this Event
+                # signalling that the download has gracefully shut down
+                timeout_event.wait(10)
 
                 did_connect = download_worker.did_connect
                 did_find_device = download_worker.did_find_device
@@ -181,7 +191,7 @@ class DataStationHandler(object):
                 shutdown_time_s = xbee_sleep_command_timer.time_elapsed()
                 logging.debug("POWER_OFF data station %s", data_station_id)
                 self.xbee.send_command(data_station_id, 'POWER_OFF')
-                time.sleep(0.5) # Try again in 0.5s
+                time.sleep(1) # Try again in 0.5s
 
                 # Will try shutting down data station over XBee for 60 seconds before moving on
                 if xbee_sleep_command_timer.time_elapsed() > shutdown_timeout_s:

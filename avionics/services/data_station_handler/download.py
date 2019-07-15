@@ -14,7 +14,7 @@ class Download(threading.Thread):
     and then exits when the download is complete.
     """
 
-    def __init__(self, _data_station_id, _redownload_request, _flight_id, _connection_timeout_millis=120000):
+    def __init__(self, _data_station_id, _redownload_request, _flight_id, _connection_timeout_s, _timeout_event):
 
         super(Download, self).__init__()
 
@@ -27,27 +27,25 @@ class Download(threading.Thread):
         self.connection_time_s = 0
         self.download_time_s = 0
 
+        self._timeout_event = _timeout_event # Allows for graceful download cutoff in event of timeout
         self._data_station_id = _data_station_id
-        self._connection_timeout_millis = _connection_timeout_millis
         self._redownload_request = _redownload_request
         self._flight_id = _flight_id
+        self._connection_timeout_s = _connection_timeout_s
 
         # TODO: pull from private file
-        self._sftp = SFTPClient('pi', 'raspberry', self._data_station_id, self._flight_id)
-
-        self.db = Database()
+        self._sftp = SFTPClient('pi', 'raspberry', self._data_station_id, self._flight_id, self._timeout_event)
 
     def _connect(self):
         # Try to connect until SFTP client is connected or timeout event happens
         data_station_connection_timer = Timer()
 
-        connection_timeout_s = self.db.get_timeout('connection')*60
-        logging.debug("Connection timeout: %s s", connection_timeout_s)
+        logging.debug("Connection timeout: %s s", self.connection_timeout_s)
         while not self._sftp.is_connected:
 
             self.connection_time_s = data_station_connection_timer.time_elapsed()
 
-            if data_station_connection_timer.time_elapsed() > connection_timeout_s:
+            if data_station_connection_timer.time_elapsed() > self.connection_timeout_s:
                 logging.error("Connection to data station %s failed permanently" % (self._data_station_id))
                 break
 
@@ -97,7 +95,6 @@ class Download(threading.Thread):
 
         # Prioritizes field data transfer over log data
         new_files_downloaded, new_files_to_download, self.did_find_device, new_data_downloaded_mb = self._sftp.downloadNewFieldData()
-        #self._sftp.downloadAllLogData()
 
         self.download_time_s = data_station_download_timer.time_elapsed()
 
@@ -122,6 +119,9 @@ class Download(threading.Thread):
         self.successful_downloads = successful_downloads
         self.total_files = total_files
 
+        # Signals to DS handler that the download has gracefully shut down
+        self._timeout_event.clear()
+
         logging.info("Total Files: %s" % total_files)
         logging.info("Successfully Downloaded: %s" % successful_downloads)
 
@@ -130,7 +130,6 @@ class Download(threading.Thread):
         # Close connection to data station
         logging.debug("Closing SFTP connection...")
         self._sftp.close()
-
 
     def run(self):
         self._connect()
