@@ -40,12 +40,12 @@ class Download(threading.Thread):
         # Try to connect until SFTP client is connected or timeout event happens
         data_station_connection_timer = Timer()
 
-        logging.debug("Connection timeout: %s s", self.connection_timeout_s)
+        logging.debug("Connection timeout: %s s", self._connection_timeout_s)
         while not self._sftp.is_connected:
 
             self.connection_time_s = data_station_connection_timer.time_elapsed()
 
-            if data_station_connection_timer.time_elapsed() > self.connection_timeout_s:
+            if data_station_connection_timer.time_elapsed() > self._connection_timeout_s:
                 logging.error("Connection to data station %s failed permanently" % (self._data_station_id))
                 break
 
