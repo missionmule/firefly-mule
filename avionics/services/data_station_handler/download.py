@@ -14,7 +14,7 @@ class Download(threading.Thread):
     and then exits when the download is complete.
     """
 
-    def __init__(self, _data_station_id, _redownload_request, _flight_id, _connection_timeout_s, _timeout_event):
+    def __init__(self, _data_station_id, _redownload_request, _flight_id, _connection_timeout_s, _timeout_event, _download_over):
 
         super(Download, self).__init__()
 
@@ -28,6 +28,7 @@ class Download(threading.Thread):
         self.download_time_s = 0
 
         self._timeout_event = _timeout_event # Allows for graceful download cutoff in event of timeout
+        self._download_over = _download_over
         self._data_station_id = _data_station_id
         self._redownload_request = _redownload_request
         self._flight_id = _flight_id
