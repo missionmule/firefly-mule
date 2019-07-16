@@ -257,7 +257,6 @@ class SFTPClient(object):
                         try:
                             self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
                             new_data_downloaded_mb+=os.path.getsize(os.path.join(self.LOCAL_FIELD_DATA_DESTINATION, file)) / 1024 / 1024 # get size and conver to megabytes
-                            logging.debug("new_data: %s", new_data_downloaded_mb)
                             self.moveFileToTmp(path, file)
                             num_files_downloaded+=1
                         except: # Don't move file to tmp if error is raised in download
@@ -300,7 +299,6 @@ class SFTPClient(object):
                         try:
                             self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
                             old_data_downloaded_mb+=os.path.getsize(os.path.join(self.LOCAL_FIELD_DATA_DESTINATION, file)) / 1024 / 1024 # get size and conver to megabytes
-                            logging.debug("old_data: %s", old_data_downloaded_mb)
                             num_files_downloaded+=1
                         except:
                             pass

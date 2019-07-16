@@ -147,17 +147,13 @@ class DataStationHandler(object):
                 download_timeout_s = self.db.get_timeout('download')*60
                 logging.debug("Download timeout: %s s", download_timeout_s)
 
-                logging.debug("Before timeout")
                 download_worker.join(download_timeout_s)
 
-                logging.debug("Before timeout event set")
                 timeout_event.set()
-                logging.debug("After timeout event set, waiting...")
 
                 # Waits (at most 10s) for download_worker to unset this Event
                 # signalling that the download has gracefully shut down
                 download_over.wait(10)
-                logging.debug("After wait")
                 download_over.clear()
 
                 did_connect = download_worker.did_connect

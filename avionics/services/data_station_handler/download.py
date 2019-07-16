@@ -55,7 +55,7 @@ class Download(threading.Thread):
 
             # Without this, the service spins when the data station is booted,
             # but not yet accepting SSH connections
-            time.sleep(0.5)
+            time.sleep(1)
 
         logging.debug("Total connection time: %s", self.connection_time_s)
 
