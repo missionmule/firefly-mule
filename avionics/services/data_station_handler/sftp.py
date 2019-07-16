@@ -251,6 +251,7 @@ class SFTPClient(object):
                     if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
 
                         if (self.__timeout_event.is_set()): # Quit early and return data
+                            logging.debug("Timeout raised, exiting download")
                             return num_files_downloaded, num_files_to_download, did_find_device, new_data_downloaded_mb
 
                         try:
@@ -293,6 +294,7 @@ class SFTPClient(object):
                     if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
 
                         if (self.__timeout_event.is_set()): # Quit early and return data
+                            logging.debug("Timeout raised, exiting download")
                             return num_files_downloaded, num_files_to_download, old_data_downloaded_mb
 
                         try:
