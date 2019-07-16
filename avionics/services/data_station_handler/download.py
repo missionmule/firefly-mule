@@ -121,6 +121,7 @@ class Download(threading.Thread):
 
         # Signals to DS handler that the download has gracefully shut down
         self._timeout_event.clear()
+        self._download_over.set()
 
         logging.info("Total Files: %s" % total_files)
         logging.info("Successfully Downloaded: %s" % successful_downloads)

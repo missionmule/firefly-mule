@@ -127,6 +127,7 @@ class DataStationHandler(object):
 
             redownload_request = self.db.get_redownload_request(data_station_id)
             timeout_event = threading.Event()
+            download_over = threading.Event()
 
             connection_timeout_s = self.db.get_timeout('connection')*60
 
@@ -134,7 +135,8 @@ class DataStationHandler(object):
                                        redownload_request,
                                        self.flight_id,
                                        connection_timeout_s,
-                                       timeout_event)
+                                       timeout_event,
+                                       download_over)
 
             try:
                 # This throws an error if the connection times out
@@ -154,8 +156,9 @@ class DataStationHandler(object):
 
                 # Waits (at most 10s) for download_worker to unset this Event
                 # signalling that the download has gracefully shut down
-                timeout_event.wait(10)
+                download_over.wait(10)
                 logging.debug("After wait")
+                download_over.clear()
 
                 did_connect = download_worker.did_connect
                 did_find_device = download_worker.did_find_device
