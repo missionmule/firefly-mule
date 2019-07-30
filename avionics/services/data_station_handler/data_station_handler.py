@@ -187,11 +187,10 @@ class DataStationHandler(object):
 
         shutdown_timeout_s = self.db.get_timeout('shutdown')*60
         logging.debug("Shutdown timeout: %s s", shutdown_timeout_s)
-
+        
         # If the data station actually turned on and we're not in test mode, shut it down
         if not (os.getenv('TESTING') == 'True') and (wakeup_successful == True):
             while not self.xbee.acknowledge(data_station_id, 'POWER_OFF'):
-                shutdown_time_s = xbee_sleep_command_timer.time_elapsed()
                 logging.debug("POWER_OFF data station %s", data_station_id)
                 self.xbee.send_command(data_station_id, 'POWER_OFF')
                 time.sleep(1) # Try again in 0.5s
@@ -202,7 +201,7 @@ class DataStationHandler(object):
                     shutdown_successful = False
                     break
 
-        logging.debug("Total shutdown time: %s", shutdown_time_s)
+        logging.debug("Total shutdown time: %s", xbee_sleep_command_timer.time_elapsed())
 
         self.db.update_flight_station_stats(data_station_id,
             self.flight_id,
