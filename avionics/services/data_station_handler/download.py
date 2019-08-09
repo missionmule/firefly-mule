@@ -14,7 +14,7 @@ class Download(threading.Thread):
     and then exits when the download is complete.
     """
 
-    def __init__(self, _data_station_id, _redownload_request, _flight_id, _connection_timeout_millis=120000):
+    def __init__(self, _data_station_id, _redownload_request, _flight_id, _connection_timeout_s, _timeout_event, _download_over):
 
         super(Download, self).__init__()
 
@@ -22,23 +22,35 @@ class Download(threading.Thread):
         self.total_files = 0
         self.did_connect = False
         self.did_find_device = False
+        self.total_data_downloaded_mb = 0
+        self.download_speed_mbps = 0
+        self.connection_time_s = 0
+        self.download_time_s = 0
 
+        self._timeout_event = _timeout_event # Allows for graceful download cutoff in event of timeout
+        self._download_over = _download_over
         self._data_station_id = _data_station_id
-        self._connection_timeout_millis = _connection_timeout_millis
         self._redownload_request = _redownload_request
         self._flight_id = _flight_id
+        self._connection_timeout_s = _connection_timeout_s
 
         # TODO: pull from private file
-        self._sftp = SFTPClient('pi', 'raspberry', self._data_station_id, self._flight_id)
-
-        self.db = Database()
+        self._sftp = SFTPClient('pi', 'raspberry', self._data_station_id, self._flight_id, self._timeout_event)
 
     def _connect(self):
         # Try to connect until SFTP client is connected or timeout event happens
         data_station_connection_timer = Timer()
+
+        delay = 40 # Delay before connecing to data station
+        logging.info("Waiting %s s for station to boot", delay)
+        time.sleep(delay) # Wait for data station to boot
+
+        logging.debug("Connection timeout: %s s", self._connection_timeout_s)
         while not self._sftp.is_connected:
 
-            if data_station_connection_timer.time_elapsed() > self._connection_timeout_millis/1000:
+            self.connection_time_s = data_station_connection_timer.time_elapsed()
+
+            if data_station_connection_timer.time_elapsed() > (self._connection_timeout_s-delay):
                 logging.error("Connection to data station %s failed permanently" % (self._data_station_id))
                 break
 
@@ -47,7 +59,9 @@ class Download(threading.Thread):
 
             # Without this, the service spins when the data station is booted,
             # but not yet accepting SSH connections
-            time.sleep(0.5)
+            time.sleep(1)
+
+        logging.debug("Total connection time: %s", self.connection_time_s)
 
         # Throw an error to tell navigation to continue on
         if not self._sftp.is_connected:
@@ -68,20 +82,32 @@ class Download(threading.Thread):
         new_files_downloaded = 0
         old_files_downloaded = 0
 
+        old_data_downloaded_mb = 0
+        new_data_downloaded_mb = 0
+
         new_files_to_download = 0
         old_files_to_download = 0
 
+        data_station_download_timer = Timer()
+
         if self._redownload_request == True:
             # Flight operator has ordered redownload of previously downloaded data
-            old_files_downloaded, old_files_to_download = self._sftp.downloadTmpFieldData()
+            old_files_downloaded, old_files_to_download, old_data_downloaded_mb = self._sftp.downloadTmpFieldData()
         else:
             # Remove data that has been placed in /.tmp/ to await removal on
             # the UAV's second pass
             self._sftp.deleteTmpFieldData()
 
         # Prioritizes field data transfer over log data
-        new_files_downloaded, new_files_to_download, self.did_find_device = self._sftp.downloadNewFieldData()
-        #self._sftp.downloadAllLogData()
+        new_files_downloaded, new_files_to_download, self.did_find_device, new_data_downloaded_mb = self._sftp.downloadNewFieldData()
+
+        self.download_time_s = data_station_download_timer.time_elapsed()
+
+        # Get total mb downloaded
+        self.total_data_downloaded_mb = old_data_downloaded_mb + new_data_downloaded_mb
+
+        # Calculate bitrate in Mbps (mb*s*8 bits/byte)
+        self.download_speed_mbps = self.total_data_downloaded_mb/self.download_time_s * 8
 
         # Calculate percent of files downloaded and round down to the nearest integer
         successful_downloads = new_files_downloaded + old_files_downloaded
@@ -98,15 +124,18 @@ class Download(threading.Thread):
         self.successful_downloads = successful_downloads
         self.total_files = total_files
 
-        logging.debug("Total Files: %s" % total_files)
-        logging.debug("Successfully Downloaded: %s" % successful_downloads)
+        # Signals to DS handler that the download has gracefully shut down
+        self._timeout_event.clear()
+        self._download_over.set()
 
-        logging.info("Download complete [%s downloaded]" % percent_downloaded)
+        logging.info("Total Files: %s" % total_files)
+        logging.info("Successfully Downloaded: %s" % successful_downloads)
+
+        logging.info("Download complete [%s percent downloaded]" % percent_downloaded)
 
         # Close connection to data station
         logging.debug("Closing SFTP connection...")
         self._sftp.close()
-
 
     def run(self):
         self._connect()

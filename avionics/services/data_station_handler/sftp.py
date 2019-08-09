@@ -6,6 +6,7 @@ import logging
 import paramiko
 import os
 import binascii
+import threading
 
 class SFTPClient(object):
 
@@ -36,7 +37,7 @@ class SFTPClient(object):
 
     is_connected = False
 
-    def __init__(self, _username, _password, _hostname, _flight_id):
+    def __init__(self, _username, _password, _hostname, _flight_id, _timeout_event):
 
         # Update destination directories to include hostname for data differentiation
         self.__hostname, self.__network_suffix = _hostname.split('.')
@@ -48,6 +49,8 @@ class SFTPClient(object):
         self.__username = _username
         self.__password = _password
         self.__hostname = _hostname
+
+        self.__timeout_event = _timeout_event
 
         host_keys = paramiko.util.load_host_keys(os.path.expanduser('/home/pi/.ssh/known_hosts'))
         logging.getLogger("paramiko").setLevel(logging.INFO)
@@ -219,6 +222,7 @@ class SFTPClient(object):
 
         num_files_to_download = 0
         num_files_downloaded = 0
+        new_data_downloaded_mb = 0
         did_find_device = False # A hacky test for the exitence of any file other than `/media/usb*/`
 
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
@@ -245,14 +249,20 @@ class SFTPClient(object):
                 # Download files
                 for file in files:
                     if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
+
+                        if (self.__timeout_event.is_set()): # Quit early and return data
+                            logging.debug("Timeout raised, exiting download")
+                            return num_files_downloaded, num_files_to_download, did_find_device, new_data_downloaded_mb
+
                         try:
                             self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
+                            new_data_downloaded_mb+=os.path.getsize(os.path.join(self.LOCAL_FIELD_DATA_DESTINATION, file)) / 1024 / 1024 # get size and conver to megabytes
                             self.moveFileToTmp(path, file)
                             num_files_downloaded+=1
                         except: # Don't move file to tmp if error is raised in download
                             pass
 
-        return num_files_downloaded, num_files_to_download, did_find_device
+        return num_files_downloaded, num_files_to_download, did_find_device, new_data_downloaded_mb
 
     def downloadTmpFieldData(self):
         """
@@ -266,9 +276,9 @@ class SFTPClient(object):
 
         num_files_to_download = 0
         num_files_downloaded = 0
+        old_data_downloaded_mb = 0
 
         for path, files in self._walk(self.REMOTE_FIELD_DATA_SOURCE):
-
             # Recurse into /media/ and download only `.tmp` directories
             if path.endswith('.tmp') or path.endswith('.tmp/'):
                 # Loop through all files and count number to be downloaded
@@ -281,13 +291,19 @@ class SFTPClient(object):
 
                 for file in files:
                     if (not file.startswith('.')) and (file.endswith('.JPG') or file.endswith('.JPEG') or file.endswith('.jpg') or file.endswith('.jpeg')):
+
+                        if (self.__timeout_event.is_set()): # Quit early and return data
+                            logging.debug("Timeout raised, exiting download")
+                            return num_files_downloaded, num_files_to_download, old_data_downloaded_mb
+
                         try:
                             self.downloadFile(path, self.LOCAL_FIELD_DATA_DESTINATION, file)
+                            old_data_downloaded_mb+=os.path.getsize(os.path.join(self.LOCAL_FIELD_DATA_DESTINATION, file)) / 1024 / 1024 # get size and conver to megabytes
                             num_files_downloaded+=1
                         except:
                             pass
 
-        return num_files_downloaded, num_files_to_download
+        return num_files_downloaded, num_files_to_download, old_data_downloaded_mb
 
     def deleteTmpFieldData(self):
         """
@@ -300,31 +316,3 @@ class SFTPClient(object):
             if path.endswith('.tmp') or path.endswith('.tmp/'):
                 for file in files:
                     self.deleteFile(path, file)
-
-    # -----------------------
-    # Log data methods
-    # -----------------------
-
-    def downloadAllLogData(self):
-        """
-        Download all data station log data
-        """
-        pass
-        # file_list = self.getRemoteFileList(self.REMOTE_LOG_SOURCE)
-        # if not file_list:
-        #     logging.info("No log files to download")
-        # else:
-        #     logging.info("Downloading %i log files..." % (len(file_list)))
-        #     # Download all files
-        #     for file_name in file_list:
-        #         self.downloadFile(self.REMOTE_LOG_SOURCE, self.LOCAL_LOG_DESTINATION, file_name)
-
-    def deleteAllLogData(self):
-        """
-        Remove successfully downloaded log files
-        """
-        pass
-        # logging.debug("Beginning data station log removal")
-        # for file_name in os.listdir(self.LOCAL_LOG_DESTINATION): # List newly downloaded files
-        #     self.deleteFile(self.REMOTE_LOG_SOURCE, file_name)
-        # logging.info("Field data removal complete")
